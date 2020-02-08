@@ -1,0 +1,7 @@
+#Luminosity Priors Description File
+#LCRS R-band Luminosity Function (Lin et al., 1996)
+
+1	1=USE
+2	FILTER ID
+-21.4	Mstar
+-0.7	alpha

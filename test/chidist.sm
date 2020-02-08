@@ -1,0 +1,52 @@
+# ##########################################################################
+#
+# Super Mongo Macro design to plot the chi-squared distributions of file
+# fort.90 produced by pza on the testing program zphot.f .
+# To plot the chi-squared distribution of object N in the gal_phot.dat 
+# file, just type 'plot N'.
+#
+# ##########################################################################
+
+plot 1
+
+	erase
+	expand 1.1
+
+	location 6000 31000 3500 31000	
+
+	data fort.90
+	lines 1 1
+	read nlines 2
+	lines $(($1-1)*(nlines[0]+1)+2) $($1*(nlines[0]+1))
+	read {z 1 chi2 2 cwprior 3}
+
+	limits z (chi2 concat cwprior)
+	ctype black
+	expand 1.8
+	box
+	expand 1.1
+
+	ctype red
+	points z chi2
+	ctype blue
+	points z cwprior
+	ctype black
+
+	expand 1.5
+	relocate $($fx1+0.8*($fx2-$fx1)) $($fy1+0.9*($fy2-$fy1))
+	ctype red
+	putlabel 5 Without Prior
+	relocate $($fx1+0.8*($fx2-$fx1)) $($fy1+0.8*($fy2-$fy1))
+	ctype blue
+	putlabel 5 With Prior
+	ctype black
+	expand 1.5
+	
+
+	expand 2
+	xlabel z
+	ylabel \chi^2
+	expand 1.1
+
+	location 3500 31000 3500 31000
+

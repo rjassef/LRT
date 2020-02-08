@@ -1,0 +1,15 @@
+##
+#Filter Name		       Norm       Zero Point
+##
+Bw_atmccd                	 1	  3627.5
+R_atmccd                 	 1	  2935.7
+I_atmccd                 	 1	  2349.6
+sdssz                    	 3	  3500.7
+jband                    	 1	  1686.0
+#hband				 1	  1024.0
+kband                    	 1	   672.4
+K_atmccd                 	 1	   653.7
+IRAC_ch1_total_response  	 2	   260.1
+IRAC_ch2_total_response  	 2	   182.3
+IRAC_ch3_total_response  	 2	   116.8
+IRAC_ch4_total_response  	 2	    61.5

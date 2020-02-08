@@ -1,0 +1,166 @@
+WARNING: This python module is simply a wrapper for calling the
+fortran libraries. Because of this, you must setup the folder in the
+same way as if you were going to run the fortran codes. This means you
+should create the bandmag.dat file, and setup the priors and cosmology
+files in the same manner.
+
+######
+
+General
+
+The module is called SED_Model. New objects are created through
+lrt_model(). So, to create a new object called "my_galaxy", your code
+may look like this:
+
+import SED_Model
+my_galaxy = SED_Model.lrt_model()
+
+
+#######################################################################
+
+Requirements
+
+You must have numpy and matplotlib installed. You can easily get these
+with the STScI Ureka software.
+
+Also, you must set your python path to point to the lrt path. In bash
+this would look like
+
+PYTHONPATH=$PYTHONPATH:$LRTPATH
+export PYTHONPATH
+
+#############
+
+User Provided Attributes
+
+There are 3 attributes that must be provided by the user. These are
+the fluxes, the error in the fluxes, and the flags to either use them
+or not in the fits. Additionally, the use can also specify the
+spectrocopic redshift if known. These attributes are:
+
+self.jy   : numpy array with fluxes in Jy
+
+self.ejy  : numpy array with the flux uncertainties in Jy
+
+self.jyuse: int32 numpy array of the same length as the previous
+	    two. A number 1 means use the flux, a number means it is
+	    an upper bound, and a number 0 means to not use it int he
+	    fit.
+
+self.zspec: Spectroscopic redshift
+
+
+NOTE: Fluxes must be in THE SAME order as in the bandmag.dat file.
+
+#############
+
+Object Methods
+
+o self.kc_fit()
+  Runs the SED modeling. Can only be used if zspec has been specified
+  or if zphot is calculated, and self.jy, self.ejy and self.jyuse have
+  been specified.
+
+o self.pz_fit()
+  Runs the photo-z estimate. Can only be used if self.jy, self.ejy and
+  self.jyuse have been specified.
+
+o self.plot()
+  Displays plot of the best-fit SED. Only available after running
+  kc_fit()
+
+o self.plot_to_file("file_name")
+  Instead of displaying the best-fit SED plot, sends the plot to a
+  file of name file_name. The extension of file_name determines what
+  format the image will be saved as.
+
+o self.get_model_fluxes()
+  Model the fluxes for a specified self.comp, self.ebv, self.igm and
+  self.zspec or self.zphot. The model fluxes are saved on
+  self.jymod. Note that running kc_fit() already sets self.jymod with
+  that model fluxes of that best-fit. This method should be used to
+  experiment with changing the values of the relevant attributes.
+
+#############
+
+Object Attributes
+
+
+o self.jymod
+  Holds the fluxes of the best-fit SED model. Need to run
+  self.kc_fit() or self.get_model_fluxes() populate.
+
+o self.ebv
+  Best-fit E(B-V) for the AGN component
+
+o self.igm
+  Best-fit strength of the IGM absorption of the best-fit SED.
+
+o self.chi2
+  Goodness of fit the SED model through the kc_fit() method.
+
+o self.z0 = 0.
+  Redshift to which K-corrections are calculated. Default is 0.
+
+o self.jycorr 
+  Observed flux K-corrections. Need to run kc_fit() to populate. 
+
+o self.nchan
+  Number of bands (i.e., elements in self.jy)
+
+o self.comp
+  Intrinsic luminosity of each template component (see lrt manual for
+  details). Need to run self.kc_fit()
+ 
+o self.cov  = None
+  Covariance matrix of the self.comp values. Need to run self.kc_fit() 
+
+o self.op   = 0
+  op = 0: self.jy are fluxes
+  op = 1: self.jy are magnitudes !!NOT SURE CAN BE USED!!
+
+o self.zmin = 0.0
+  Redshift grid starting point for photo-z estimation. Default is 0.
+
+o self.zmax = 6.0
+  Redshift grid end point for photo-z estimation. Default is 6.0
+
+o self.dz   = 0.01
+  Redshift grid spacing. Default is 0.01
+
+o self.chigal 
+  chigal value of the pz_fit() method. See pza function in the lrt
+  manual.
+
+o self.chinop = None
+  chinop value of the pz_fit() method. See pza function in the lrt
+  manual.
+
+o self.chi2zop = 0 
+  Print or not the P(z) for the target. If ==1, it can be
+  dangerous. Default is 0.
+
+o self.zphot
+  Photometric redshift. Need to run pz_fit()
+  
+o self.ahat 
+  ahat of the best-fit. See Assef et al.(2013) for exact definition.
+
+o self.iverbose = 0
+  Run in verbose mode (1) or not (0). Default is 0.
+
+o self.L6um 
+  6um monochromatic luminosity in erg/s.
+
+o self.Mstar 
+  Stellar mass in Msun from the g-r/K calibration of Bell et al. (2003).
+
+o self.tempuse = [1,1,1,1] 
+  List to set which templates will be use in the SED fit by
+  self.kc_fit() (not yet implemented for self.pz_fit()). Each element
+  determines a template, such that self.tempuse[i]=0 means that
+  template i will not be used and self.tempuse[i]=1 means that it
+  will. The numbers are: i=0=AGN, i=1=E, i=2=Sbc and i=3=Im. 
+
+
+  

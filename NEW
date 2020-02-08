@@ -1,0 +1,12 @@
+v1.0
+----
+
+*Release version.
+
+
+
+v1.0.1
+------
+
+*One common block name was repeated. Seems to have to no influence on
+the code's output except for codes compiled with the latest versions of g77.
