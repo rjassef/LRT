@@ -1,2 +1,2 @@
 # LRT
-This is a new development branch. x
+This is a new development branch.
