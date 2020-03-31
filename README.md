@@ -1,2 +1,2 @@
 # LRT
-This is a new development branch.
+This is the original release put into github. 
