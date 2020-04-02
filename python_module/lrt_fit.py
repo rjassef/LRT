@@ -4,56 +4,60 @@ from .new_SED_Model import lrt_model
 
 class lrt_fit(lrt_model):
 
-    def __init__(self,_jy,_ejy,_jyuse):
+    #Initialize
+    def __init__(self,jy,ejy,jyuse=None,z=None):
 
-        #If single object is loaded, add extra dimension for compatibility.
-        if len(_jy.shape)==1:
-            _jy    = np.expand_array(_jy   , axis=0)
-            _ejy   = np.expand_array(_ejy  , axis=0)
-            _jyuse = np.expand_array(_jyuse, axis=0)
+        if len(shape(jy))==1:
+            jy  = np.expand_dims(jy,axis=0)
+            ejy = np.expand_dims(ejy,axis=0)
+
+        if jyuse is None:
+            jyuse = np.ones(jy.shape, dtype=np.int32)
+        else:
+            self.jyuse = jyuse
+            #Must make sure jyuse is really composed of integers.
+            self.jyuse = self.jyuse.astype(int)
+
+        if z is None:
+            self.z = np.ones(jy.shape[0])*-1
+        else:
+            self.z = z
+
+        self.ebv  = -np.ones(jy.shape[0])
+        self.igm  = -np.ones(jy.shape[0])
+        self.chi2 = -np.ones(jy.shape[0])
+
+        self.redigmprior = 1
 
         #Initiate the main object.
-        super().__init__(_jy=_jy,_ejy=_ejy,_jyuse=_jyuse)
+        super().__init__(jy=jy,ejy=ejy,jyuse=jyuse,z=z)
+        return
 
 
-    def kc_fit(self):
+    def kc_fit(self, zuse=None, z0=0.):
         '''Calls kca to do a full SED fit using the kca function.
            If no redshift is provided, then uses the photo-z.
+
+           zuse = Redshift estimate. If not provided will use zbest.
+
+           z0   = Redshift to which one wants to K-correct to.
         '''
 
-        #Check data is loaded.
-        if self.jy is None or self.ejy is None or self.jyuse is None:
-            print("Attempted fit without loading data")
-            return
-
-        #Check some redshift is provided.
-        self.z = self.zspec
-        if self.z==None or self.z<0.:
-            self.z = self.zspec
-            if self.zphot==None:
-                print("Must provide a redshift or run pz_fit.")
-                return
+        #Check redshifts are avilable.
+        if zuse is None:
+            if self.zbest is not None:
+                zuse = self.zbest
             else:
-                self.z = self.zphot
+                return
 
         #Check kc has been initalized. Otherwise do it.
-        if self._kcinit == False:
+        try:
+            self._kcinit
+        except NameError:
             lrt.kcinit("bandmag.dat",1,1,1,self.iverbose)
             self.nchan = lrt.data1b.nchan
+            self.nspec = lrt.specmod1.nspec
             self._kcinit = True
-            self._pzinit = False
-
-        #Check if the K-correction redshift is provided. Otherwise, set 0.
-        if self.z0 == None:
-            self.z0 = 0.
-
-        #Initialize needed values.
-        if self.ebv is None:
-            self.ebv = np.array(-1.0)
-        if self.igm == None:
-            self.igm = np.array(-1.0)
-        if self.chi2 == None:
-            self.chi2 = np.array(-1.0)
 
         #Set the templates to use
         lrt.ivary.ivaryobj = np.array(self.tempuse).astype(np.int32)
@@ -62,21 +66,33 @@ class lrt_fit(lrt_model):
         lrt.red_igm_prior.use_red_igm_prior = self.redigmprior
 
         #Initialize output arrays.
-        self.jymod  = np.zeros(self.nchan)
-        self.jycorr = np.zeros(self.nchan)
-        self.cov    = np.asfortranarray(np.zeros((self.nspec,self.nspec)))
+        self.jymod  = np.zeros(self.jy.shape)
+        self.jycorr = np.zeros(self.jy.shape)
+        self.cov    = np.asfortranarray(np.zeros((self.nobj,self.nspec,self.nspec)))
+        self.comp = np.zeros((self.nobj,self.nspec))
 
-        #Initialize the template amplitudes if not initialized yet.
-        if self.comp is None:
-            self.comp = np.zeros(self.nspec)
+        #For speed, we should later on implement a multi-core approach.
+        for k in self.nobj:
+            jy    = self.jy[nchan*k:nchan*(k+1)]
+            ejy   = self.ejy[nchan*k:nchan*(k+1)]
+            jyuse = self.jyuse[nchan*k:nchan*(k+1)]
+            z     = zuse[k]
 
-        #Must make sure jyuse is really composed of integers.
-        self.jyuse = self.jyuse.astype(int)
+            jymod  = np.zeros(self.nchan)
+            jycorr = np.zeros(self.nchan)
+            comp   = np.zeros(self.nspec)
+            cov    = np.zeros((self.nspec,self.nspec))
+            ebv    = np.zeros(1)
+            igm    = np.zeros(1)
+            chi2   = np.zeros(1)
 
-        #Run the fit.
-        lrt.kca(self.jy,self.ejy,
-                self.jyuse,self.z,
-                self.z0,self.jymod,
-                self.jycorr,self.comp,
-                self.cov,self.ebv,self.igm,
-                self.chi2,self.op)
+            #Run the fit.
+            lrt.kca(jy, ejy, jyuse, z, z0, jymod, jycorr, comp, cov, ebv, self.igm, self.chi2, 0)
+
+            self.jymod[k]  = jymod
+            self.jycorr[k] = jycorr
+            self.comp[k]   = comp
+            self.cov[k]    = cov
+            self.ebv[k]    = ebv[0]
+            self.igm[k]    = igm[0]
+            self.chi2[k]   = chi2[0] 

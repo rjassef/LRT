@@ -7,21 +7,22 @@ import lrt
 class lrt_model(object):
 
     #Initialize
-    def __init__(self,_jy=None,_ejy=None,_jyuse=None,_z=None):
+    def __init__(self,jy=None,ejy=None,jyuse=None,z=None):
 
         #Values needed to consider that the object is declared.
-        self.jy    = _jy
-        self.ejy   = _ejy
-        self.jyuse = _jyuse
+        self.jy    = jy
+        self.ejy   = ejy
+        self.jyuse = jyuse
+        self.z     = z
+
+        self.comp = None
+        self.zphot = None
 
         return
 
     @property
     def ahat(self):
-        try:
-            if self.comp is None:
-                return None
-        except NameError:
+        if self.comp is None:
             return None
         _ahat = np.zeros(self.nobj)
         for nobj in range(self.nobj):
@@ -29,25 +30,19 @@ class lrt_model(object):
         return _ahat
 
     @property
-    def L6um(self):
-        try:
-            if self.z is None or self.comp is None:
-                return None
-        except NameError:
+    def L6um(self,zuse=None):
+        if self.comp is None:
+            return None
+        if zuse is None:
+            if self.zbset is not None:
+                zuse = self.zbest
             return None
         _L6um = np.zeros(self.nobj)
         for nobj in range(self.nobj):
-            _L6um[nobj] = lrt.get_lnu(self.comp[nobj],self.z[nobj],6.)*3.e14/6.
+            _L6um[nobj] = lrt.get_lnu(self.comp[nobj],zuse[nobj],6.)*3.e14/6.
         return _L6um
 
     ######
-
-    @property
-    def ready_to_fit(self):
-        if self.jy is None or self.ejy is None or self.jyuse is None:
-            print("Need to declare object.jy, object.ejy and object.jyuse in order to run anything.")
-            return False
-        return True
 
     @property
     def nobj(self):
@@ -55,24 +50,18 @@ class lrt_model(object):
             return None
         return jy.shape[0]
 
+    #Prefer the provided redshifts. If any are <0, then use the photo-z if available. If neither are available, give an error message.
     @property
-    def z(self):
-        _z = np.zeros(self.nobj)
-        for nobj in range(nobj):
+    def zbest(self):
 
-        #Always use zspec if available and positive.
-        try:
-            _z = self.zspec
-        except NameError:
-            _z = -1.0*np.ones(self.nobj)
+        #First check if we will need to check the photo-zs.
+        if len(self.z[self.z>0])==len(self.z):
+            return self.z
 
-        if _z<0. or _z is None:
-            try:
-                _z = self.zphot
-            except NameError:
-                _z = None
+        #If any are 0 or negative, we'll need photo-zs. Check if they exist.
+        if self.zphot is None:
+            return None
 
-        if _z is None:
-            print("Must provide a redshift or run pz_fit.")
-
-        return _z
+        #If they exist, replace the non-positive zs with zphots.
+        zbest = np.where(self.z>0,self.z,self.zphot)
+        return zbest
