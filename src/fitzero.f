@@ -8,15 +8,15 @@ c     for a more thorough explanation.
 
       subroutine fitzero(filename,niter2,chifrac,corr,op)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4,NGMAX=17000)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4,NTMAX=4,NGMAX=17000)
 
       real*8 corr(*)
-      integer op   
+      integer op
       character filename*(*)
       character*1000 line
       real*8 jya(NGMAX,NCMAX),ejya(NGMAX,NCMAX)
       integer jyusea(NGMAX,NCMAX)
-      real*8 z(NGMAX)      
+      real*8 z(NGMAX)
       real*8 wgta(NGMAX,NCMAX,NWMAX)
       real*8 jwmina(NGMAX,NCMAX),jwmaxa(NGMAX,NCMAX)
       real*8 dchi(NGMAX),chitemp(NGMAX)
@@ -39,7 +39,7 @@ c     routine.
       real*8 c(NCMAX)
       common /weights1/wgt,c
       integer jwmin(NCMAX),jwmax(NCMAX)
-      common /weights2/jwmin,jwmax 
+      common /weights2/jwmin,jwmax
 
       real*8 jy(NCMAX),ejy(NCMAX)
       integer nchan
@@ -61,7 +61,7 @@ c     routine.
       common /cal1/jyzero,con,lbar
 
       integer ivaryobj(NSMAX)
-      common /ivary/ivaryobj     
+      common /ivary/ivaryobj
 
       real*8 tau(NWMAX),ebv,igm
       common /dust/tau,ebv,igm
@@ -92,7 +92,7 @@ c     than the number of templates + 2 (IGM + reddening).
          m = 0
          do j=1,nchan
             if(jyusea(i,j).ge.1) m = m + 1
-         enddo       
+         enddo
          if(m.gt.nspec+2) i = i+1
 
          if(i.gt.NGMAX) then
@@ -101,7 +101,7 @@ c     than the number of templates + 2 (IGM + reddening).
             write(0,*)
             write(0,*)'Too many galaxies in training set.'
             write(0,*)'A maximum of ',NGMAX,' is currently allowed.'
-            write(0,*)'Please remove extra galaxies from the' 
+            write(0,*)'Please remove extra galaxies from the'
             write(0,*)'training set or edit the source file fitzero.f'
             write(0,*)'and adjust the value of NGMAX where needed.'
             write(0,*)
@@ -138,7 +138,7 @@ c     Calculate the weights of each object.
                wgt(j,k) = getweight(z(i),j,k)
                wgta(i,j,k) = wgt(j,k)
             enddo
-            call getrange(j)         
+            call getrange(j)
             jwmaxa(i,j) = jwmax(j)
             jwmina(i,j) = jwmin(j)
          enddo
@@ -178,7 +178,7 @@ c     Set all the variables needed for compatibility
                jwmax(j) = jwmaxa(i,j)
                jwmin(j) = jwmina(i,j)
             enddo
-            
+
 c     Now Fit the Model Fluxes to the spectra
             do l=1,nspec
                vec(l) = 0.d0
@@ -198,7 +198,7 @@ c     Add the flux terms.
                   endif
                enddo
             endif
-            
+
 c     Calculate the chi2 for each galaxy
             dchi(i) = 0.d0
             do j=1,nchan
@@ -208,7 +208,7 @@ c     Calculate the chi2 for each galaxy
             enddo
             if(dchiuse(i).eq.1) chi2 = chi2 + dchi(i)
          enddo
-      
+
 c     Calculate the corrections on each band, keeping the first one
 c     fixed
          do j=1,nchan
@@ -229,7 +229,7 @@ c     Determine which galaxies to use on next run.
             do i=1,ntarg
                dchiuse(i) = 1
                if (dchi(i).ge.chilim) dchiuse(i) = 0
-            enddo      
+            enddo
          endif
 
 c     If this is the first run, reset the constants
@@ -241,7 +241,7 @@ c     If this is the first run, reset the constants
 
          write(12,200)(c(j),j=1,nchan),chi2
  200     format(12E20.6)
-         
+
       enddo
 
       if(verbose.eq.1) then
@@ -273,36 +273,36 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Determine the fit coefficients for individual galaxies.
       subroutine fitzero_fitgal(niter,isuccess,z)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NGMAX=17000,NWMAX=350,NSMAX=4,NTMAX=4)
-      
+      parameter (NCMAX=40,NGMAX=17000,NWMAX=350,NSMAX=4,NTMAX=4)
+
       real*8 jy(NCMAX),ejy(NCMAX)
       common /data1b/jy,ejy,nchan
-      
+
       integer jyuse(NCMAX)
       common /data2/jyuse
-      
+
       real*8 vec(NSMAX)
       real*8 jymod(NSMAX,NCMAX)
       real*8 jymodtot(NCMAX)
       common /models/jymod,jymodtot,vec
-      
+
       real*8 spec(NSMAX,NWMAX),specuse(NSMAX,NWMAX)
       common /specmod1/spec,specuse,nspec
       common /specnorm/bminnorm,bmaxnorm
-      
+
       real*8 wgt(NCMAX,NWMAX)
       real*8 c(NCMAX)
       common /weights1/wgt,c
       integer jwmin(NCMAX),jwmax(NCMAX)
       common /weights2/jwmin,jwmax
-      
+
       integer ivaryobj(NSMAX)
       common /ivary/ivaryobj
-      
+
       real*8 bedge(NWMAX)
       real*8 bcen(NWMAX)
       common /wavegrid/bedge,bcen,nwave
-      
+
       real*8 a(10,10),b(10)
       real*8 atemp(10,10),btemp(10)
       real*8 asave(10,10),bsave(10)
@@ -330,19 +330,19 @@ c     Determine the fit coefficients for individual galaxies.
       real*8 emin,emax,de
       real*8 gmin,gmax,dg
       integer ne,ng
-      common /redpars/emin,emax,de,ne     
+      common /redpars/emin,emax,de,ne
       common /igmpars/gmin,gmax,dg,ng
 
 
       chimin = 1.d32
-      
+
       ng0 = ng
       do j=1,ne
          chitabebv(j) = 1.d32
       enddo
       do j=1,ng
          chitabigm(j) = 1.d32
-      enddo     
+      enddo
 
 c     Start the main cycle.
       do ie = 1,ne+1
@@ -372,7 +372,7 @@ c     the best value of E(B-V) and IGM.
      *                 ((x3**2-x2**2)*(x2-x1)-(x2**2-x1**2)*(x3-x2))
                   bb = ((y3-y2)-aa*(x3**2-x2**2))/(x3-x2)
                   euse = -bb/(2.d0*aa)
-                  if((euse.lt.tabebv(iebst-1)).or.(euse.gt.tabebv(iebst+1))) 
+                  if((euse.lt.tabebv(iebst-1)).or.(euse.gt.tabebv(iebst+1)))
      *                 euse = tabebv(iebst)
                endif
                guse = tabigm(igbst)
@@ -385,7 +385,7 @@ c     as it is uniformly sampled in linear space.
                      guse = tabigm(igbst) + 0.5*dg*
      *                    (chitabigm(igbst+1)-chitabigm(igbst-1))/den
                      if((guse.lt.tabigm(igbst-1)).or.
-     *                    (guse.gt.tabigm(igbst+1))) 
+     *                    (guse.gt.tabigm(igbst+1)))
      *                    guse = tabigm(igbst)
                   endif
                endif
@@ -414,17 +414,17 @@ c     Work out the contribution from each template to the object
                   enddo
                enddo
             enddo
-          
+
 c     Compute the present model
             maxdim = 10
             call clearmat(atemp,btemp,maxdim,nspec)
             do j=1,nchan
                if (jyuse(j).ge.1) then
                   do l1=1,nspec
-                     btemp(l1) = btemp(l1) + jy(j)*jymod(l1,j)/ejy(j) 
-                     do l2=l1,nspec 
+                     btemp(l1) = btemp(l1) + jy(j)*jymod(l1,j)/ejy(j)
+                     do l2=l1,nspec
                         atemp(l1,l2) = atemp(l1,l2) + jymod(l1,j)*
-     *                       jymod(l2,j)/ejy(j) 
+     *                       jymod(l2,j)/ejy(j)
                      enddo
                   enddo
                endif
@@ -437,7 +437,7 @@ c     the equations for when some are held fixed
             nm1 = 0
             do l1=1,nspec
                if (ivaryobj(l1).eq.1) then
-                  nm1    = nm1 + 1 
+                  nm1    = nm1 + 1
                   nm2    = 0
                   b(nm1) = btemp(l1)
                   do l2=1,nspec
@@ -491,7 +491,7 @@ c     Copy solution out into final vector
                   vec(l1) = temps(nm1)
                endif
             enddo
-                  
+
 
 c     Calculate the chi2 of the solution.
             do j=1,nchan
@@ -526,9 +526,9 @@ c     Calculate the chi2 of the solution.
                enddo
                do j=1,nchan
                   jymodtotbest(j) = jymodtot(j)
-               enddo 
+               enddo
             endif
- 
+
          enddo
       enddo
 
@@ -551,4 +551,3 @@ c     Finally remove the prior term from the chi2.
 
       return
       end
-

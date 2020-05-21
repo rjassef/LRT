@@ -1,17 +1,17 @@
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Implementation of the NNLS algorithm of Lawson & Hanson (1974)
-c     
+c
 c     The main difference is that this code uses the numerical recipes
 c     SVD algorithm to solve the E_p * z = b equation in step 6 and that
 c     the E_p matrix is not only cut in columns but also in rows. The
 c     latter seems to make a huge difference.
 c
-c     The code solves the problem s*x = b, where 
+c     The code solves the problem s*x = b, where
 c
 c     a is a m x n matrix with declared dimensions maxdim x maxdim.
 c
 c     b is a m component vector of declared dimension maxdim.
-c     
+c
 c     x is a n component vector of declared dimension maxdim.
 c
 c
@@ -98,11 +98,11 @@ c     to step 12.
 c     Only exit if the kuhn-tacker conditions are met.
          itest = test_kuhn_tacker(a,a_t,b,x,w,p,maxdim,m,n)
          if(itest.eq.1) then
-            goto 12 
+            goto 12
          else
             goto 3
          endif
-      endif         
+      endif
 
 c     Find an index t belonging to Z such that w(t) = max{w(j),j in Z}.
  4    continue
@@ -113,7 +113,7 @@ c     Find an index t belonging to Z such that w(t) = max{w(j),j in Z}.
             itmax = l
          endif
       enddo
-      if(wmax.le.0.d0) goto 12         
+      if(wmax.le.0.d0) goto 12
 
 c     Move the index t from Z to P.
  5    continue
@@ -122,7 +122,7 @@ c     Move the index t from Z to P.
 
 c     Compute the n-vector z that solves a_p*z \approx f. Define z(j) =
 c     0 for j belonging to Z.
- 6    continue      
+ 6    continue
       nm1 = 0
       do l1=1,m
          if(p(l1).eq.1) then
@@ -225,7 +225,7 @@ c     x(j)=0. Go to step 6.
 
 
 c     Computation is completed
- 12   continue      
+ 12   continue
 
       return
       end
@@ -247,7 +247,7 @@ c
       real*8 w(maxdim)
 
       call get_w(a,a_t,b,x,w,maxdim,m,n)
-      
+
       ip = 0
       ineg = 0
       do l=1,n
@@ -304,7 +304,7 @@ c
       enddo
 
       do l=1,m
-         c(l) = b(l) - c(l) 
+         c(l) = b(l) - c(l)
       enddo
 
       do l1=1,n
@@ -778,7 +778,7 @@ ccccccccccccccc
 
       subroutine ANNLS(a,maxdim,m,n,b,x)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NSMAX=4)
+      parameter (NCMAX=40,NSMAX=4)
 
       real*8 a(maxdim,maxdim)
       real*8 b(maxdim),x(maxdim)
@@ -825,7 +825,7 @@ c     Try to solve the system without constraints
          x(l) = b(l)
       enddo
       call dgelsd(m,n,1,a,maxdim,x,maxdim,stemp,
-     *     rcond,irank,tempw,lwork,iwork,INFO)      
+     *     rcond,irank,tempw,lwork,iwork,INFO)
 
 c     If none of the components is negative, exit.
       ineg = 0
@@ -833,7 +833,7 @@ c     If none of the components is negative, exit.
          if(x(l).lt.0.d0) ineg = ineg + 1
       enddo
       if(ineg.eq.0) goto 650
-      
+
 c     If not the case, try all possible combinations.
       imax    = 2**n
       count   = 0
@@ -859,13 +859,13 @@ c     If not the case, try all possible combinations.
             temps(l) = b(l)
          enddo
          call dgelsd(nm1,nm1,1,a,maxdim,temps,maxdim,stemp,
-     *        rcond,irank,tempw,lwork,iwork,iMODE)      
+     *        rcond,irank,tempw,lwork,iwork,iMODE)
 
          do l=1,nm1
             if(temps(l).lt.0.d0) temps(l) = 0.d0
 c            print*,'temps(',l,') = ',temps(l)
-         enddo         
-         
+         enddo
+
          chi2 = 0.d0
          do j=1,nchan
             jymodtot(j) = 0.d0
@@ -874,7 +874,7 @@ c            print*,'temps(',l,') = ',temps(l)
                if(ivaryobj(l).eq.1) then
                   nm1 = nm1 + 1
                   jymodtot(j) = jymodtot(j) + temps(nm1)*jymodx(l,j)
-               endif               
+               endif
             enddo
             if(jyuse(j).ge.1) then
                diff = jy(j)-jymodtot(j)
@@ -897,10 +897,10 @@ c         pause
                endif
             enddo
          endif
-               
+
 
       enddo
-       
+
 
  650  continue
 
@@ -928,4 +928,3 @@ cccccc
 
       return
       end
-     

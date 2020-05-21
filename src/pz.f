@@ -4,7 +4,7 @@ c     luminosity priors.
 c
       subroutine pzinit(filtname,inum,ired,iigm,zmin,zmax,dz,verb_flag)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4,NTMAX=4)
 
       character filtname*(*)
 
@@ -45,7 +45,7 @@ c     expecting the following order for the parameters (lines starting
 c     with # will be skipped):
 c
 c     Use_prior
-c     Channel Number 
+c     Channel Number
 c     Mstar
 c     Alpha
 c
@@ -58,7 +58,7 @@ c     alpha are the Schechter Function (Schechter, 1976) parameters.
 c
       subroutine setlumprior
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4,NTMAX=4)
 
       real*8 mstar,alpha
       integer uselump,lumchan
@@ -69,7 +69,7 @@ c
 
       integer verbose
       common /verb/verbose
-      
+
 c     Set up the luminosity priors.
       if(verbose.eq.1) then
          print*
@@ -106,7 +106,7 @@ c     Jump here if the prior.dat file doesn't exist.
       prior(1) = 0d0
       prior(2) = 2d0
       prior(3) = -21.4d0
-      prior(4) = -0.7d0  
+      prior(4) = -0.7d0
 
  202  continue
       close(16)
@@ -114,11 +114,11 @@ c     Jump here if the prior.dat file doesn't exist.
       uselump = int(prior(1))
       lumchan = int(prior(2))
       mstar   = prior(3)
-      alpha   = prior(4)      
+      alpha   = prior(4)
 
 c     Print settings.
       if(uselump.eq.1) then
-         if(verbose.eq.1) then 
+         if(verbose.eq.1) then
             print*,'Luminosity Priors = On'
             print*,'Band   = ',lumchan
             print*,'M_star = ',mstar
@@ -133,7 +133,7 @@ c     Print settings.
          write(0,*)'Recieved ',uselump,' when expecting 0 or 1.'
          write(0,*)'Aborting Program.'
          stop
-      endif     
+      endif
 
       if(verbose.eq.1) then
          print*
@@ -147,13 +147,13 @@ c     Print settings.
       end
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-     
-c     This function writes the photoz tables. 
+
+c     This function writes the photoz tables.
 c     It should only be called after setfilt and settemp.
 c
       subroutine photoz_grid(zmin,zmax,dz)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NGMAX=17000,NSMAX=4,NWMAX=350,NXMAX=5000)
+      parameter (NCMAX=40,NGMAX=17000,NSMAX=4,NWMAX=350,NXMAX=5000)
       parameter (NEMAX=37,NIMAX=8)
 
 
@@ -163,7 +163,7 @@ c
       real*8 c(NCMAX)
       common /weights1/wgt,c
       integer jwmin(NCMAX),jwmax(NCMAX)
-      common /weights2/jwmin,jwmax 
+      common /weights2/jwmin,jwmax
 
       real*8 vec(NSMAX)
       real*8 jymod(NSMAX,NCMAX)
@@ -198,7 +198,7 @@ c
       real*8 emin,emax,de
       real*8 gmin,gmax,dg
       integer ne,ng
-      common /redpars/emin,emax,de,ne     
+      common /redpars/emin,emax,de,ne
       common /igmpars/gmin,gmax,dg,ng
 
       real*8 tigm(NWMAX)
@@ -216,7 +216,7 @@ c     Open the table file and write the header.
       ngalt = nspec
 
 c     Start the iteration.
-      if(verbose.eq.1) then 
+      if(verbose.eq.1) then
          print*
          print*,
      *   '*********************************************************'
@@ -225,12 +225,12 @@ c     Start the iteration.
       do iz=1,nz
          zbin(iz) = zmin + dz*float(iz-1)
          zgal(iz) = zbin(iz)
-         zuse = zbin(iz)            
+         zuse = zbin(iz)
 c     Build the weights.
          do jchan=1,nchan
             do kwave=1,nwave
                wgt(jchan,kwave) = getweight(zuse,jchan,kwave)
-            enddo            
+            enddo
             call getrange(jchan)
          enddo
          do ie=1,ne
@@ -261,29 +261,29 @@ c     Build the flux models only if it changes anything.
                         else
                            dust = 10.d0**(-0.4d0*tau(kwave)*euse)
                         endif
-                        galjy(iz,l,jchan,ie,ig) = 
+                        galjy(iz,l,jchan,ie,ig) =
      *                       galjy(iz,l,jchan,ie,ig) + c(jchan)*
      *                       (1.d0+zbin(iz))*spec(l,kwave)*
      *                       wgt(jchan,kwave)*dust*tigm(kwave)
-                        priorjy(iz,l,jchan) = priorjy(iz,l,jchan) + 
+                        priorjy(iz,l,jchan) = priorjy(iz,l,jchan) +
      *                       c(jchan)*(1.d0+zbin(iz))*spec(l,kwave)*
      *                       wgt(jchan,kwave)
-                     enddo                     
-                  enddo                  
+                     enddo
+                  enddo
  200              continue
-               enddo    
+               enddo
 
             enddo
          enddo
       enddo
 
-      if(verbose.eq.1) then 
+      if(verbose.eq.1) then
          print*,'Done'
          print*,
      *   '*********************************************************'
          print*
       endif
-           
+
       call setdist(zgal,nz)
 
       return
@@ -295,11 +295,11 @@ c     This function calculates photometric redshifts for galaxies based
 c     on the algorithm and templates described by Assef & Kochanek et
 c     al., 2007 (in preparation).  The function arguments are:
 c
-c     
-c     mag    =  NCMAX dimensionl vector with the observed magnitudes 
+c
+c     mag    =  NCMAX dimensionl vector with the observed magnitudes
 c               of the galaxies (real*8)
 c
-c     emag   =  NCMAX dimensional vector with the errors in the 
+c     emag   =  NCMAX dimensional vector with the errors in the
 c               observed magnitudes (real*8)
 c
 c     maguse =  NCMAX dimensional vector which holds which mags will
@@ -317,18 +317,18 @@ c               prior contribution (real*8)
 c
 c     op     =  1 if mag in magnitudes. 0 if mag in Jy. (integer)
 c
-c     chi2zop=  1 to write the chi-squared distribution to the fort.90 
+c     chi2zop=  1 to write the chi-squared distribution to the fort.90
 c               file. 0 to not do it.
 c
 c
 c     This function should only be called after the photoz tables have
 c     been set with settable. Notice that this and all the subroutines
 c     to follow do not necessarily follow the 80 character per line
-c     fortran 77 convention. 
+c     fortran 77 convention.
 c
       subroutine pza(mag,emag,maguse,zobj,chigal,chinop,op,chi2zop)
       implicit real*8(a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4,NTMAX=4)
 
       integer op, chi2zop
 
@@ -365,7 +365,7 @@ c     See which bands will be used for fitting.
       do j = 1,nchan
          if(maguse(j).ne.0.and.maguse(j).ne.1.and.
      *        maguse(j).ne.2) then
-            write(0,*)'maguse(',j,'=',maguse(j),') not equal to 2, 1 
+            write(0,*)'maguse(',j,'=',maguse(j),') not equal to 2, 1
      *        or 0 in function pza.'
             write(0,*)'Aborting program'
             stop
@@ -389,7 +389,7 @@ c     number of templates.
       endif
 
       if(op.eq.1) then
-c     Transform from magnitudes to fluxes if op==1. 
+c     Transform from magnitudes to fluxes if op==1.
          do jchan = 1,nchan
             if(jyuse(jchan).eq.1) then
                jy(jchan)  = jyzero(jchan)*10.0**(-0.4*mag(jchan))
@@ -421,61 +421,61 @@ c     Fit for the redshift.
  500  continue
 
       return
-      end 
+      end
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 c     This function fits the redshift to the galaxy.  The arguments are:
 c
-c     
+c
 c     nmag   = variable to return the number of used bands (integer)
-c     
-c     zbest  =  variable on which the best fit redshift will 
+c
+c     zbest  =  variable on which the best fit redshift will
 c               be returned (real*8)
-c     
-c     chigal =  variable on which the chi^2 of the best fit 
-c               is returned. When considering priors, this can 
+c
+c     chigal =  variable on which the chi^2 of the best fit
+c               is returned. When considering priors, this can
 c               be negative (real*8)
 c
 c     chinop =  chi-squared of the best fit without the prior.
-c     
-c     
+c
+c
 c     This fuction does not need to be called by the user at any
 c     time. It is embbeded in the pza function.
 c
       subroutine pza_fitgal(nmag,zbest,chigal,chinop)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4,NXMAX=5000)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4,NXMAX=5000)
       parameter (NEMAX=37,NIMAX=8)
 
       real*8 zgal(NXMAX),galjy(NXMAX,NSMAX,NCMAX,NEMAX,NIMAX)
       common /galtemp/zgal,galjy,ngalz,ngalt
-      
+
       real*8 jy(NCMAX),ejy(NCMAX)
       integer nchan
       common /data1b/jy,ejy,nchan
-      
+
       integer jyuse(NCMAX)
       common /data2/jyuse
-      
+
       real*8 jyzero(NCMAX),con(NCMAX),lbar(NCMAX)
       common /cal1/jyzero,con,lbar
-      
+
       real*8 dcom(5000),dlum(5000),dmod(5000),dvol(5000),rstar(5000)
       common /distance/dcom,dlum,dmod,dvol,rstar
-      
+
       real*8 a(NSMAX,NSMAX),b(NSMAX)
       real*8 asave(NSMAX,NSMAX),bsave(NSMAX)
       real*8 tempw(NSMAX),tempv(NSMAX,NSMAX),tempz(NSMAX)
       integer itempv(NSMAX)
       real*8 temps(NSMAX)
-      
+
       real*8 vfit(NSMAX)
 
       real*8 mstar,alpha
       integer uselump,lumchan
       common /lumprior/mstar,alpha,uselump,lumchan
-      
+
       real*8 vec(NSMAX)
       common /galtype/vec
 
@@ -488,7 +488,7 @@ c
       real*8 emin,emax,de
       real*8 gmin,gmax,dg
       integer ne,ng
-      common /redpars/emin,emax,de,ne     
+      common /redpars/emin,emax,de,ne
       common /igmpars/gmin,gmax,dg,ng
 
       real*8 jymodx(NSMAX,NCMAX)
@@ -509,7 +509,7 @@ c     Figure out the number of bands to use and exit if none can be used.
       nmag = 0
       do jchan=1,nchan
          if (jyuse(jchan).ge.1) nmag = nmag + 1
-      enddo      
+      enddo
 
 c     Initialize the parameters for the iteration.
       chigal    = -1.d0
@@ -521,7 +521,7 @@ c     Initialize the parameters for the iteration.
 c     Start Main Cycle.
       do k=2,nfitz
          zval = zgal(k)
-         
+
          do ie=1,ne
             if(ie.eq.1) then
                euse = 0.d0
@@ -545,7 +545,7 @@ c     Fill the matrices
                         bsave(l1) = bsave(l1) + jy(jchan)*vfit(l1)/
      *                       ejy(jchan)
                         do l2=l1,nfitt
-                           asave(l1,l2) =   asave(l1,l2) + 
+                           asave(l1,l2) =   asave(l1,l2) +
      *                          vfit(l1)*vfit(l2)/ejy(jchan)
                         enddo
                      enddo
@@ -558,7 +558,7 @@ c     are used.
                   jchan = lumchan
                   fstar = jyzero(jchan)*10.d0**(-0.4d0*(mstar+dmod(k)))
                   do l=2,nfitt
-                     bsave(l) = bsave(l) - 
+                     bsave(l) = bsave(l) -
      *                    priorjy(1,l,jchan)/fstar
                   enddo
                endif
@@ -591,7 +591,7 @@ c     combinations.
                   call ANNLS(a,maxdim,nfitt,nfitt,b,temps)
                endif
 
-c               print*,temps,nfitt               
+c               print*,temps,nfitt
 
 c     Compute the goodness of fit
                do jchan=1,nchan
@@ -630,7 +630,7 @@ c     Keep result if chi^2 is minimum or if its the first iteration.
                if ((chival.lt.chigal).or.(istart.eq.1)) then
                   istart     = 0
                   chigal     = chival
-                  if(uselump.eq.1.and.ineg.eq.0) then 
+                  if(uselump.eq.1.and.ineg.eq.0) then
                      chinop = chival - prior
                   else
                      chinop  = chival
@@ -641,10 +641,10 @@ c     Keep result if chi^2 is minimum or if its the first iteration.
                   enddo
                   ebv = euse
                   igm = guse
-                  chinop = chinop - 
+                  chinop = chinop -
      *                 ((ebv/0.5d0)**2 + ((igm-1.d0)/0.5d0)**2)
                endif
-               
+
             enddo
          enddo
 
@@ -658,4 +658,3 @@ c     If warranted, print the chi2 distribution.
 
       return
       end
-
