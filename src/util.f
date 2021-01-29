@@ -114,7 +114,7 @@ c     templates.
 c     Transform the component vectors back to the natural units of the
 c     code. Note DL(z) is in Mpc.
       if(z.gt.0.d0) then
-         DL_use = DL(z)/(1.d0+z)
+         DL_use = DL(z) !/(1.d0+z) Corrected in 2021-01-28
       else if(z.eq.-1.d0) then
 c     Assume we are getting an absolute magnitude if z=-1. So DL=10pc=1e-5Mpc
          DL_use = 1.d-5
@@ -122,7 +122,7 @@ c     Assume we are getting an absolute magnitude if z=-1. So DL=10pc=1e-5Mpc
       else
          write(6,*)'Redshift must be positive.'
       endif
-      vecfac = DL_use**2*1d10*3d-9
+      vecfac = DL_use**2*1d10*3d-9/(1.d0+z) !Added back (1+z) in 2021-01-28
       do l = 1,nspec
          vec(l) = comp(l)*alpha_norm(l)/vecfac
       enddo
