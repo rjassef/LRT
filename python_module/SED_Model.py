@@ -145,7 +145,7 @@ class lrt_model(object):
             else:
                 self.z = self.zphot
         #Calculate L6um.
-        self._L6um = lrt.get_lnu(self.comp,self.z,6.)*3.e14/6.
+        self._L6um = lrt.get_AGN_lnu(self.comp,self.z,6.)*3.e14/6.
         return self._L6um
 
     @property
@@ -163,8 +163,32 @@ class lrt_model(object):
             else:
                 self.z = self.zphot
         #Calculate L5100. Note this is lam*L_lam
-        self._L5100 = lrt.get_lnu(self.comp,self.z,0.51)*3.e14/0.51
+        self._L5100 = lrt.get_AGN_lnu(self.comp,self.z,0.51)*3.e14/0.51
         return self._L5100
+
+    def L_at_lam(self, lam):
+        """lam must be in microns."""
+        #Check kc has been initialized.
+        if self._kcinit == False:
+            lrt.kcinit("bandmag.dat",1,1,1,self.iverbose)
+            self.nchan = lrt.data1b.nchan
+            self._kcinit = True
+            self._pzinit = False
+        if self.comp is None:
+            print("Must fit or provide comp before calculating ahat")
+            return
+        #Check some redshift is provided.
+        self.z = self.zspec
+        if self.z==None or self.z<0.: 
+            self.z = self.zspec
+            if self.zphot==None:
+                print("Must provide a redshift or run pz_fit.")
+                return
+            else:
+                self.z = self.zphot
+        #Calculate L_at_lam. Note this is lam*L_lam
+        self._L_at_lam = lrt.get_lnu(self.comp,self.z,lam)*3.e14/lam
+        return self._L_at_lam
 
     @property
     def Mstar(self):
