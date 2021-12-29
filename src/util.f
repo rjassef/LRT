@@ -275,7 +275,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 c     Get the AGN Luminosity density at a specific wavelength in um
 
-      real*8 function get_Lnu(comp,z,xlam)
+      real*8 function get_AGN_Lnu(comp,z,xlam)
       implicit real*8(a-h,o-z)
       parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4)
 
@@ -316,6 +316,56 @@ c     Comp to vec
       flux  = suse*vec(1)
       flux = flux*1.d-23
       get_Lnu = 4.d0*pi*(DL(z)*3.086d24)**2 * flux/(1.d0+z)
+
+      return 
+      end
+
+c     Get the total Luminosity density at a specific wavelength in um
+
+      real*8 function get_Lnu(comp,z,xlam)
+      implicit real*8(a-h,o-z)
+      parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4)
+
+      real*8 comp(*)
+      
+      real*8 bedge(NWMAX)
+      real*8 bcen(NWMAX)
+      common /wavegrid/bedge,bcen,nwave
+
+      real*8 spec(NSMAX,NWMAX),specuse(NSMAX,NWMAX)
+      common /specmod1/spec,specuse,nspec
+      common /specnorm/bminnorm,bmaxnorm
+     
+      real*8 vec(NSMAX)
+
+      real*8 alpha_norm(NSMAX)
+      common /alphanorm/alpha_norm
+
+c     Comp to vec
+      vecfac = DL(z)**2*1d10*3d-9/(1.d0+z)
+      do l = 1,nspec
+         vec(l) = comp(l)*alpha_norm(l)/vecfac
+      enddo
+
+      pi = 4.d0*datan(1.d0)
+      flux = 0.d0
+      dflux = 0.d0
+      ksave = -1
+      do k=1,nwave
+         if(bcen(k).ge.xlam) then
+            ksave = k
+            goto 70
+         endif
+      enddo
+ 70   continue
+      flux_tot = 0.d0
+      do l=1,nspec
+         suse = (spec(l,ksave)-spec(l,ksave-1))/(bcen(ksave)-bcen(ksave-1))
+     *          * (xlam-bcen(ksave)) + spec(l,ksave)
+         flux_tot = flux_tot + suse*vec(l)
+      enddo
+      flux_tot = flux_tot*1.d-23
+      get_Lnu = 4.d0*pi*(DL(z)*3.086d24)**2 * flux_tot/(1.d0+z)
 
       return 
       end
