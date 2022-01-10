@@ -315,7 +315,7 @@ c     Comp to vec
      *     * (xlam-bcen(ksave)) + spec(1,ksave)
       flux  = suse*vec(1)
       flux = flux*1.d-23
-      get_Lnu = 4.d0*pi*(DL(z)*3.086d24)**2 * flux/(1.d0+z)
+      get_AGN_Lnu = 4.d0*pi*(DL(z)*3.086d24)**2 * flux/(1.d0+z)
 
       return 
       end
