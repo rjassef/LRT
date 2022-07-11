@@ -3,3 +3,4 @@
 *.so
 *.a
 lrt.cpython*dSYM
+.vscode
