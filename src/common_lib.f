@@ -991,6 +991,7 @@ c     Only gets here if there is no file with zero point corrections.
             c(j) = 1.d0
          enddo
  102  continue
+      close(16)
 
 c     Read the channel zero point corrections.
       if(verbose.eq.1.and.icheck.eq.1) then
