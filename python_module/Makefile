@@ -14,7 +14,7 @@ LAPACKPATH = ''
 #LAPACKPATH='/usr/lib64/atlas/'
 
 #Source Files
-LIB_SOURCE = ../src/kc.f ../src/pz.f ../src/common_lib.f ../src/kca_util.f ../src/util.f ../src/min.f ../src/fitzero.f ../src/heapsort.f
+LIB_SOURCE = ../src/kc.f ../src/pz.f ../src/common_lib.f ../src/kca_util.f ../src/util.f ../src/min.f ../src/fitzero.f ../src/heapsort.f ../src/star.f
 
 #Set here the location of libpython2.7 if needed.
 #LIBPYPATH = "/home/rjassef/Software/Ureka/Ureka/python/lib/python2.7/config/"

@@ -364,7 +364,7 @@ class lrt_model(object):
 
     ###
 
-    def plot(self):
+    def plot(self, figname=None):
 
         '''
         Plots the model and the data.
@@ -493,13 +493,21 @@ class lrt_model(object):
             plt.text(xloc, yloc,r'$E(B-V)_{AGN}$'+" = %.2f" % (self.ebv),
                      transform = ax.transAxes)
 
-        if not in_ipython():
-            plt.show(block=True)
+        #if not in_ipython():
+        #    plt.show(block=True)
+        if figname is None:
+            plt.show()
+        else:        
+            plt.savefig(figname)
 
-        
+        return
+
     ###
 
     def plot_to_file(self,fig_name):
+
+        self.plot(figname=fig_name)
+        return
 
         '''
         Plots the model and the data.

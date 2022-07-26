@@ -3,7 +3,6 @@ c     subroutine will initialize the bands and the templates.
 c
         subroutine starinit(filtname,inum,verb_flag)
         implicit real*8 (a-h,o-z)
-        parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4)
 
         character filtname*(*)
 
@@ -24,6 +23,116 @@ c     Initialize the templates.
 
         return
         end
+
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+        subroutine settemp_star(num)
+        implicit real*8 (a-h,o-z)
+        parameter (NCMAX=40,NWMAX=350,NSTMAX=54)
+
+        integer num
+
+        real*8 bedge(NWMAX)
+        real*8 bcen(NWMAX)
+        common /wavegrid/bedge,bcen,nwave
+
+        real*8 spec_stars(NSTMAX,NWMAX)
+        common /specmod_stars/spec_stars,nspec_stars
+
+        integer ivaryobj(4)
+        common /ivary/ivaryobj
+
+        character*100 specname
+        character*100 channame
+        character*200 path
+
+        integer verbose
+        common /verb/verbose
+
+c     Get Path
+        call getenv('LRTPATH',path)
+        call noblank(path,ip1,ip2)
+
+c     Set the Path to the current directory if it has not been set
+        if(ip1.eq.101) then
+            write(path,*)"."
+            ip1 = 2
+            ip2 = 2
+        endif
+
+c     Set the name of the file with the spectra.
+c   1 is Main Sequence
+c   2 is Giant Stars
+c   3 is Super Giant Stars
+        if(num.eq.1) then
+            write(specname,*)path(ip1:ip2), '/specs/lrt_kc04_MS.dat'
+        else if(num.eq.2) then
+            write(specname,*)path(ip1:ip2), '/specs/lrt_kc04_GS.dat'
+        else if(num.eq.3) then
+            write(specname,*)path(ip1:ip2), '/specs/lrt_kc04_SGS.dat'
+        else
+        write(0,*)'Invalid value for inum: ',num
+        write(0,*)'Exiting program.'
+        stop
+        endif
+
+c     Set the range of wavelengths uniformly spaced in log space. The
+c     templates that will be read will be compared to this grid. If you
+c     which to change the templates remember to modify this part of the
+c     code or comply to the grid.
+        nwave     =  300
+        bminl     =  dlog10(0.03d0)
+        bmaxl     =  dlog10(30.0d0)
+        dbl       = (bmaxl-bminl)/float(nwave)
+        do kwave=1,nwave+1
+        bedge(kwave)  =  10.d0**(bminl+dbl*float(kwave-1))
+        enddo
+        do kwave=1,nwave
+        bcen(kwave) = 0.5d0*(bedge(kwave)+bedge(kwave+1))
+        enddo
+
+c     Read the templates and check the wavelenghts matches with the
+c     grid.
+        if(verbose.eq.1) then
+        print*
+        print*,'*********************************************************'
+        print*,'Reading Templates... '
+        endif
+
+        call noblank(specname,is1,is2)
+        open(unit=13,file=specname(is1:is2),form='formatted',status='old')
+        read(13,*)nwt,nspec
+        if(verbose.eq.1) then
+            print*,'Setting up ',nspec,' Templates'
+        endif
+        if (nwt.ne.nwave) then
+            write(0,*)'startup file has too few wavelengths ',nwt,nwave
+            stop
+        endif
+        do kwave=1,nwave
+            read(13,*)bt,tt,(spec_stars(ll,kwave),ll=1,nspec)
+            if (dabs(bt-bcen(kwave))/bt.gt.0.01d0) then
+                write(0,*)'wavelength mismatch in startup file ',bt,bcen(kwave)
+                stop
+            endif
+        enddo
+        close(unit=13)
+        nspec_stars = nspec
+
+c     Initialize the ivaryobj files. The default is to use all templates.
+        do l=1,4
+            ivaryobj(l) = 1
+        enddo
+
+        if(verbose.eq.1) then
+            print*,'Done'
+            print*,'*********************************************************'
+            print*
+        endif
+
+        return
+        end
+
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
@@ -72,12 +181,11 @@ c
 c     This function should only be called after calling setfilt and
 c     settemp.
 c
-        subroutine star_fit(mag,emag,maguse,magmod,comp,chi2,op)
+        subroutine star_fit(mag,emag,maguse,magmod,comp,nstar_best,chi2,op)
         implicit real*8(a-h,o-z)
-        parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4)
+        parameter (NCMAX=40,NWMAX=350,NSTMAX=54)
 
-        real*8 mag(*),emag(*),magmod(*),magcorr(*),comp(*)
-        real*8 covx(NSMAX,NSMAX)
+        real*8 mag(*),emag(*),magmod(*),comp(*)
         integer maguse(*),op
 
         real*8 z
@@ -89,10 +197,10 @@ c
         integer jyuse(NCMAX)
         common /data2/jyuse
 
-        real*8 vec(NSMAX)
-        real*8 jymod(NSMAX,NCMAX)
+        real*8 vec(2)
+        real*8 jymod(NSTMAX,NCMAX)
         real*8 jymodtot(NCMAX)
-        common /models/jymod,jymodtot,vec
+        common /models_stars/jymod,jymodtot,vec,ns_best
 
         real*8 jyzero(NCMAX),con(NCMAX),lbar(NCMAX)
         common /cal1/jyzero,con,lbar
@@ -107,15 +215,13 @@ c
         integer jwmin(NCMAX),jwmax(NCMAX)
         common /weights2/jwmin,jwmax 
 
-        real*8 spec(NSMAX,NWMAX),specuse(NSMAX,NWMAX)
-        common /specmod1/spec,specuse,nspec
-        common /specnorm/bminnorm,bmaxnorm
-
         real*8 chimin
         common /minchi/chimin
 
 c   We are fitting stars, so z=0.
         z = 0.d0
+
+        nspec = nspec_stars
 
 c     See which bands will be used for fitting.
         m = 0
@@ -136,28 +242,28 @@ c     Since we are fitting two templates at a time, make sure there are at least
             write(0,*)'Too few magnitudes to fit stellar models (<',nspec_fit,').'
             do j=1,nchan
                 magmod(j)  = -99.
-                magcorr(j) = -99.
             enddo
-            do l=1,nspec
-                comp(l) = -1
+            do l=1,2
+                comp(l) = -1.d0
             enddo
+            nstar_best = -1
             goto 500
         endif
 
         if(op.eq.1) then
 c     If op = 1, transform from magnitudes to fluxes. 
             do jchan = 1,nchan
-            if(jyuse(jchan).eq.1) then
-                jy(jchan)  = jyzero(jchan)*10.0**(-0.4*mag(jchan))
-                ejy(jchan) = 0.4*log(10.0)*emag(jchan)*jy(jchan)
-            else if(jyuse(jchan).eq.2) then
-                jy(jchan)  = 0.d0
-                ejy(jchan) = jyzero(jchan)*10.0**(-0.4*emag(jchan))
-            else
-                jy(jchan)  = 0.d0
-                ejy(jchan) = 0.d0
-            endif
-            ejy(jchan) = ejy(jchan)**2
+                if(jyuse(jchan).eq.1) then
+                    jy(jchan)  = jyzero(jchan)*10.0**(-0.4*mag(jchan))
+                    ejy(jchan) = 0.4*log(10.0)*emag(jchan)*jy(jchan)
+                else if(jyuse(jchan).eq.2) then
+                    jy(jchan)  = 0.d0
+                    ejy(jchan) = jyzero(jchan)*10.0**(-0.4*emag(jchan))
+                else
+                    jy(jchan)  = 0.d0
+                    ejy(jchan) = 0.d0
+                endif
+                ejy(jchan) = ejy(jchan)**2
             enddo
         else if(op.eq.0) then
 c     If op = 0, data is in flux.
@@ -182,18 +288,7 @@ c     Build the weights
 
 c     Now Fit the Model Fluxes to the spectra. Allow for fixed
 c     components with a provided amplitude.
-        do l = 1,nspec
-            vec(l) = 0.d0
-        enddo
         call run_stellar_fit
-
-        do j=1,nchan
-            jymodtot(j)   = 0.d0
-            do l = 1,nspec
-                jymodtot(j)   = jymodtot(j) + vec(l)*jymod(l,j)
-            enddo
-        enddo
-
 
         if(op.eq.1) then
 c     Write the results in magnitudes if op==1.
@@ -209,10 +304,11 @@ c     Write the results in magnitudes if op==1.
 
 c     Copy the components of vector vec to the output comp and scale
 c     them to specific luminosities units. Assume a distance of 10pc.
-        vecfac = (10.d-6)**2*1d10*3d-9
-        do l = 1,nspec
-            comp(l) = vec(l)*vecfac/alpha_norm(l)         
+        do l = 1,2
+            comp(l) = vec(l)
         enddo
+        nstar_best = ns_best
+        chi2=chimin
 
 500     continue
 
@@ -222,9 +318,9 @@ c     them to specific luminosities units. Assume a distance of 10pc.
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 c     Determine the fit coefficients for individual galaxies.
-        subroutine kca_fitgal
+        subroutine run_stellar_fit
         implicit real*8 (a-h,o-z)
-        parameter (NCMAX=32,NGMAX=17000,NWMAX=350,NSMAX=4,NTMAX=4)
+        parameter (NCMAX=40,NGMAX=17000,NWMAX=350,NSTMAX=54)
         
         real*8 z
         real*8 jy(NCMAX),ejy(NCMAX)
@@ -234,16 +330,18 @@ c     Determine the fit coefficients for individual galaxies.
 
         integer jyuse(NCMAX)
         common /data2/jyuse
-        
-        real*8 vec(NSMAX)
-        real*8 jymod(NSMAX,NCMAX)
+
+        real*8 vec(2)
+        real*8 jymod(NSTMAX,NCMAX)
         real*8 jymodtot(NCMAX)
-        common /models/jymod,jymodtot,vec
-        
-        real*8 spec(NSMAX,NWMAX),specuse(NSMAX,NWMAX)
-        common /specmod1/spec,specuse,nspec
-        common /specnorm/bminnorm,bmaxnorm
-        
+        common /models_stars/jymod,jymodtot,vec,ns_best
+
+        real*8 jymodx(4,NCMAX)
+        common /modelsx/jymodx
+
+        real*8 spec_stars(NSTMAX,NWMAX)
+        common /specmod_stars/spec_stars,nspec_stars
+
         real*8 wgt(NCMAX,NWMAX)
         real*8 c(NCMAX)
         common /weights1/wgt,c
@@ -261,173 +359,120 @@ c     Determine the fit coefficients for individual galaxies.
         integer itempv(10)
         real*8 temps(10),temps2(10)
 
-        real*8 jymodx(NSMAX,NCMAX)
-        common /modelsx/jymodx
-
-        real*8 vecbest(NSMAX)
-        real*8 jymodbest(NSMAX,NCMAX)
+        real*8 vecbest(NSTMAX)
+        real*8 jymodbest(NSTMAX,NCMAX)
         real*8 jymodtotbest(NCMAX)
-
-        real*8 cov(NSMAX,NSMAX)
-        common /vecerr/cov
-
-        real*8 tigm(NWMAX)
 
         real*8 chimin
         common /minchi/chimin
 
-        real*8 work(500)
-        integer ipiv(10)
-
+c     Set a large value for chi2min to start.
         chimin = 1.d32
-    
 
-c   Initialize the chi2
-        chi = 0.d0
-
+c     For compatibility+simplicity.
+        nspec = nspec_stars
 
 c     Work out the contribution from each template to the object
         do l=1,nspec
             do j=1,nchan
                 jymod(l,j) = 0.d0
                 do k=jwmin(j),jwmax(j)
-                    jymod(l,j) = jymod(l,j) + c(j)*spec(l,k)*wgt(j,k)
+                    jymod(l,j) = jymod(l,j) + c(j)*spec_stars(l,k)*
+     *  wgt(j,k)
                 enddo
             enddo
         enddo
-            
-c     Compute the present model
-        maxdim = 10
-        call clearmat(atemp,btemp,maxdim,nspec)
-        do j=1,nchan
-            if (jyuse(j).ge.1) then
-                do l1=1,nspec
-                    b(l1) = b(l1) + jy(j)*jymod(l1,j)/ejy(j) 
-                    do l2=l1,nspec 
-                        a(l1,l2) = a(l1,l2) + jymod(l1,j)*jymod(l2,j)/ejy(j) 
-                    enddo
-                enddo
-            endif
-        enddo
-        call symmat(atemp,btemp,maxdim,nspec)
 
-c     Save the matrices
-        do l1=1,nm1
-            bsave(l1) = b(l1)
-            do l2=1,nm1
-                asave(l1,l2) = a(l1,l2)
+c     Compute the present model. Here, we run in pairs of templates.
+        maxdim = 10
+        do ns=1,nspec-1
+
+c     Build the matrices.
+            nm1 = 2
+            call clearmat(a,b,maxdim,nm2)
+            do j=1,nchan
+                if (jyuse(j).ge.1) then
+                    do l1=1,2
+                        ll1 = l1+ns-1
+                        b(l1) = b(l1) + jy(j)*jymod(ll1,j)/ejy(j) 
+                        do l2=l1,2
+                            ll2=l2+ns-1
+                            a(l1,l2) = a(l1,l2) + jymod(ll1,j)*
+     *                                  jymod(ll2,j)/ejy(j) 
+                        enddo
+                    enddo
+                endif
             enddo
-        enddo
+            call symmat(a,b,maxdim,nm1)
+                
+c     Save the matrices
+            nm1 = 2
+            do l1=1,nm1
+                bsave(l1) = b(l1)
+                do l2=1,nm1
+                    asave(l1,l2) = a(l1,l2)
+                enddo
+            enddo
 
 c     Solve assuming only positive coefficients. If convergence fails,
 c     revert to the slower version going through all possible
 c     combinations.
-        call my_nnls_2(a,maxdim,nm1,nm1,b,temps,MODE,its,0)
-        if(MODE.eq.3) then
-            do l1=1,nm1
-                b(l1) = bsave(l1)
-                do l2=1,nm2
-                a(l1,l2) = asave(l1,l2)
+            call my_nnls_2(a,maxdim,nm1,nm1,b,temps,MODE,its,0)
+            if(MODE.eq.3) then
+                do l1=1,nm1
+                    b(l1) = bsave(l1)
+                    do l2=1,nm2
+                    a(l1,l2) = asave(l1,l2)
+                    enddo
                 enddo
-            enddo
-            nm3 = 0
-            do l=1,nspec
-                if(ivaryobj(l).eq.1) then
-                nm3 = nm3 + 1
-                do j=1,nchan
-                    jymodx(nm3,j) = jymod(l,j)
+                nm3 = 0
+                do l=ns,ns+1
+                    nm3 = nm3 + 1
+                    do j=1,nchan
+                        jymodx(nm3,j) = jymod(l,j)
+                    enddo
                 enddo
-                endif
-            enddo
-            call ANNLS(a,maxdim,nm1,nm1,b,temps)
-        endif
+                call ANNLS(a,maxdim,nm1,nm1,b,temps)
+            endif
 
 c     Copy solution out into final vector
-        nm1  = 0
-        do l1=1,nspec
-            nm1     = nm1 + 1
-            vec(l1) = temps(nm1)
-        enddo
+            do l=1,2
+                vec(l) = temps(l)
+            enddo
 
 c     Calculate the chi-square of the fit.
-        do j=1,nchan
-            jymodtot(j) = 0.d0
-            do l=1,nspec
-                jymodtot(j) = jymodtot(j) + vec(l)*jymod(l,j)
+            chi = 0.d0
+            do j=1,nchan
+                jymodtot(j) = 0.d0
+                do l=1,2
+                    jymodtot(j) = jymodtot(j) + vec(l)*jymod(l+ns-1,j)
+                enddo
+                if(jyuse(j).ge.1) then
+                    diff = jy(j)-jymodtot(j)
+                    chi  = chi + diff*diff/ejy(j)
+                endif
             enddo
-            if(jyuse(j).ge.1) then
-                diff = jy(j)-jymodtot(j)
-                chi  = chi + diff*diff/ejy(j)
-            endif
-        enddo
 
-            if(chi.le.chitabebv(ie)) chitabebv(ie) = chi
-            if(chi.le.chitabigm(ig)) chitabigm(ig) = chi
             if(chi.le.chimin) then
                 chimin = chi
-                ebv    = euse
-                igm    = guse
-                iebst  = ie
-                igbst  = ig
-                do l=1,nspec
+                ns_best = ns
+                do l=1,2
                     vecbest(l) = vec(l)
-                    do j=1,nchan
-                    jymodbest(l,j) = jymod(l,j)
-                    enddo
                 enddo
                 do j=1,nchan
                     jymodtotbest(j) = jymodtot(j)
-                enddo 
-    c     Estimate the template errors.
-                nm1 = 0
-                do l=1,nspec
-                    nm1 = nm1 + ivaryobj(l)
-                enddo
-                lwork = 500
-                call dgetrf(nm1,nm1,asave,maxdim,ipiv,INFO)               
-                call dgetri(nm1,asave,maxdim,ipiv,work,lwork,INFO)
-                nm1 = 0.d0
-                do l1=1,nspec
-                    nm2 = 0
-                    if(ivaryobj(l1).eq.1) then
-                    nm1 = nm1 + 1
-                    do l2=1,nspec
-                        if(ivaryobj(l2).eq.1) then
-                            nm2 = nm2 + 1
-                            cov(l1,l2) = asave(nm1,nm2)
-                        else
-                            cov(l1,l2) = 0.d0
-                        endif
-                    enddo
-                    else
-                    do l2=1,nspec
-                        cov(l1,l2) = 0.d0
-                    enddo
-                    endif
-                enddo              
+                enddo           
             endif 
-
-        enddo
         enddo
 
-    c     Now that we've finished the main cycle, get the best fit
-    c     values. Notice that this is not immediate from the last cycle, as
-    c     it is possible for the interpolation scheme to give a larger chi2
-    c     as the surface is not necessarily a good paraboloid.
-        do l=1,nspec
-        vec(l) = vecbest(l)
-        do j=1,nchan
-            jymod(l,j) =jymodbest(l,j)
-        enddo
+c     Now that we've finished the main cycle, get the best fit
+c     values. 
+        do l=1,2
+            vec(l) = vecbest(l)
         enddo
         do j=1,nchan
-        jymodtot(j) = jymodtotbest(j)
+            jymodtot(j) = jymodtotbest(j)
         enddo
-
-    c     Finally remove the prior term from the chi2.
-        if(use_red_igm_prior.eq.1) then
-        chimin = chimin - ((ebv/0.5d0)**2 + ((igm-1.d0)/0.5d0)**2)
-        endif
 
         return
         end

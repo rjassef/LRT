@@ -4,7 +4,7 @@ FC = gfortran
 #FC = ifort
 
 #Compiler Flags
-FCFLAGS = -ffixed-line-length-none -std=legacy
+FCFLAGS = -ffixed-line-length-none -std=legacy #-fbounds-check
 #FCFLAGS = -ffixed-line-length-none
 #FCFLAGS = -extend_source -O #-check
 
@@ -16,7 +16,7 @@ RANLIB = /usr/bin/ranlib
 RM = /bin/rm -f
 
 #Object Files
-LIB_OBJS = kc.o pz.o common_lib.o kca_util.o util.o min.o fitzero.o heapsort.o
+LIB_OBJS = kc.o pz.o common_lib.o kca_util.o util.o min.o fitzero.o heapsort.o star.o
 
 #Library Name
 LFILE = liblrt.a
