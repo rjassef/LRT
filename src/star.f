@@ -181,8 +181,8 @@ c
         implicit real*8(a-h,o-z)
         parameter (NCMAX=40,NWMAX=350,NSTMAX=54)
 
-        real*8 mag(NCMAX),emag(NCMAX),magmod(NCMAX),comp(NCMAX)
-        integer maguse(NCMAX),op
+        real*8 mag(*),emag(*),magmod(*),comp(*)
+        integer maguse(*),op
 
         real*8 z
         real*8 jy(NCMAX),ejy(NCMAX)
@@ -213,6 +213,8 @@ c
 
         real*8 chimin
         common /minchi/chimin
+
+Cf2py intent(inout) nstar_best,chi2
 
 c   We are fitting stars, so z=0.
         z = 0.d0
@@ -346,9 +348,9 @@ c     Determine the fit coefficients for individual galaxies.
         real*8 bcen(NWMAX)
         common /wavegrid/bedge,bcen,nwave
         
-        real*8 a(10,10),b(10)
-        real*8 asave(10,10),bsave(10)
-        real*8 temps(10)
+        real*8 a(2,2),b(2)
+        real*8 asave(2,2),bsave(2)
+        real*8 temps(2)
 
         real*8 vecbest(2)
         real*8 jymodtotbest(NCMAX)
@@ -374,12 +376,12 @@ c     Work out the contribution from each template to the object
         enddo
 
 c     Compute the present model. Here, we run in pairs of templates.
-        maxdim = 10
+        maxdim = 2
         do ns=1,nspec-1
 
 c     Build the matrices.
             nm1 = 2
-            call clearmat(a,b,maxdim,nm2)
+            call clearmat(a,b,maxdim,nm1)
             do j=1,nchan
                 if (jyuse(j).ge.1) then
                     do l1=1,2
