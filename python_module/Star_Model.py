@@ -16,6 +16,7 @@ class StarModel(object):
         lrt.starinit(bandmag_file,star_type[st],0)
         self.star_type = star_type
         self.nchan = lrt.data1b.nchan
+        self.st = st
 
         #Initiliaze some parameters needed to pass to the fortran functions.
         self.comp = np.zeros(2)
@@ -34,6 +35,8 @@ class StarModel(object):
         try:
             self.jymod = np.zeros(len(self.jy))
             lrt.stf(self.jy,self.ejy,self.jyuse,self.jymod,self.comp,self.ns_best,self.chi2,self.op)
+            frac = self.comp[1]/np.sum(self.comp)
+            self.tfit = self.ns_best+frac
         except AttributeError as e:
             print(e)
             print("Could not run lrt.star_fit. Make sure all fluxes have been set before calling.")
@@ -107,6 +110,14 @@ class StarModel(object):
         if self.chi2 is not None:
             yloc -= dyloc
             plt.text(xloc, yloc,r'$\chi^2$'+"= %.2f" % (self.chi2),
+                     transform = ax.transAxes)
+        if self.st is not None:
+            yloc -= dyloc
+            plt.text(xloc, yloc,r'Stellar Type: {}'.format(self.st),
+                     transform = ax.transAxes)
+        if self.ns_best is not None:
+            yloc -= dyloc
+            plt.text(xloc, yloc,'Templates: {0:.2f})'.format(self.tfit),
                      transform = ax.transAxes)
 
         if figname is None:
