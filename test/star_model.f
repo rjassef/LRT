@@ -53,7 +53,7 @@ c     Calculate number of usable bands
                 m = m + jyuse(j)
             enddo
 
-            call star_fit(jy,ejy,jyuse,jymod,comp,ns_best,chi2,0)
+            call stf(jy,ejy,jyuse,jymod,comp,ns_best,chi2,0)
 
             write(12,100)i,m,ns_best,chi2,(comp(l),l=1,2)
 100         format(3i10,25E20.6)

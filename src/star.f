@@ -9,9 +9,6 @@ c
         integer verbose,verb_flag
         common /verb/verbose
 
-        integer pzon
-        common /regen/zmax2,zmin2,dz2,pzon
-
         verbose = verb_flag
 
 c     Initialize the filters.
@@ -28,7 +25,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
         subroutine settemp_star(num)
         implicit real*8 (a-h,o-z)
-        parameter (NCMAX=40,NWMAX=350,NSTMAX=54)
+        parameter (NWMAX=350,NSTMAX=54)
 
         integer num
 
@@ -43,7 +40,6 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
         common /ivary/ivaryobj
 
         character*100 specname
-        character*100 channame
         character*200 path
 
         integer verbose
@@ -71,9 +67,9 @@ c   3 is Super Giant Stars
         else if(num.eq.3) then
             write(specname,*)path(ip1:ip2), '/specs/lrt_kc04_SGS.dat'
         else
-        write(0,*)'Invalid value for inum: ',num
-        write(0,*)'Exiting program.'
-        stop
+            write(0,*)'Invalid value for inum: ',num
+            write(0,*)'Exiting program.'
+            stop
         endif
 
 c     Set the range of wavelengths uniformly spaced in log space. The
@@ -85,10 +81,10 @@ c     code or comply to the grid.
         bmaxl     =  dlog10(30.0d0)
         dbl       = (bmaxl-bminl)/float(nwave)
         do kwave=1,nwave+1
-        bedge(kwave)  =  10.d0**(bminl+dbl*float(kwave-1))
+            bedge(kwave)  =  10.d0**(bminl+dbl*float(kwave-1))
         enddo
         do kwave=1,nwave
-        bcen(kwave) = 0.5d0*(bedge(kwave)+bedge(kwave+1))
+            bcen(kwave) = 0.5d0*(bedge(kwave)+bedge(kwave+1))
         enddo
 
 c     Read the templates and check the wavelenghts matches with the
@@ -181,12 +177,12 @@ c
 c     This function should only be called after calling setfilt and
 c     settemp.
 c
-        subroutine star_fit(mag,emag,maguse,magmod,comp,nstar_best,chi2,op)
+        subroutine stf(mag,emag,maguse,magmod,comp,nstar_best,chi2,op)
         implicit real*8(a-h,o-z)
         parameter (NCMAX=40,NWMAX=350,NSTMAX=54)
 
-        real*8 mag(*),emag(*),magmod(*),comp(*)
-        integer maguse(*),op
+        real*8 mag(NCMAX),emag(NCMAX),magmod(NCMAX),comp(NCMAX)
+        integer maguse(NCMAX),op
 
         real*8 z
         real*8 jy(NCMAX),ejy(NCMAX)
@@ -220,8 +216,6 @@ c
 
 c   We are fitting stars, so z=0.
         z = 0.d0
-
-        nspec = nspec_stars
 
 c     See which bands will be used for fitting.
         m = 0
@@ -320,7 +314,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Determine the fit coefficients for individual galaxies.
         subroutine run_stellar_fit
         implicit real*8 (a-h,o-z)
-        parameter (NCMAX=40,NGMAX=17000,NWMAX=350,NSTMAX=54)
+        parameter (NCMAX=40,NWMAX=350,NSTMAX=54)
         
         real*8 z
         real*8 jy(NCMAX),ejy(NCMAX)
@@ -353,14 +347,10 @@ c     Determine the fit coefficients for individual galaxies.
         common /wavegrid/bedge,bcen,nwave
         
         real*8 a(10,10),b(10)
-        real*8 atemp(10,10),btemp(10)
         real*8 asave(10,10),bsave(10)
-        real*8 tempw(10),tempv(10,10),tempz(10)
-        integer itempv(10)
-        real*8 temps(10),temps2(10)
+        real*8 temps(10)
 
-        real*8 vecbest(NSTMAX)
-        real*8 jymodbest(NSTMAX,NCMAX)
+        real*8 vecbest(2)
         real*8 jymodtotbest(NCMAX)
 
         real*8 chimin
