@@ -467,3 +467,58 @@ c     values.
         return
         end
 
+c     Given a certain vector comp, holding the specific luminosities of
+c     each component (just like the one returned by the kca function),
+c     this subroutine returns the fluxes you would expect at a given
+c     redshift. This function if for creating mock galaxies using the
+c     templates.
+        subroutine get_fluxes_stars(comp,ns_best,jymodtot)
+        implicit real*8 (a-h,o-z)
+        parameter (NCMAX=40,NWMAX=350,NSTMAX=54)
+
+        real*8 comp(*),jymodtot(*)
+        real*8 vec(2)
+
+        real*8 wgt(NCMAX,NWMAX)
+        real*8 c(NCMAX)
+        common /weights1/wgt,c
+        integer jwmin(NCMAX),jwmax(NCMAX)
+        common /weights2/jwmin,jwmax
+
+        real*8 bedge(NWMAX)
+        real*8 bcen(NWMAX)
+        common /wavegrid/bedge,bcen,nwave
+
+        real*8 spec_stars(NSTMAX,NWMAX)
+        common /specmod_stars/spec_stars,nspec_stars 
+
+
+        do l=1,2
+            vec(l) = comp(l)
+        enddo
+
+        z=0.d0
+        do jchan=1,nchan
+            do kwave=1,nwave
+                wgt(jchan,kwave) = getweight(z,jchan,kwave)
+            enddo
+            call getrange(jchan)
+        enddo
+
+        do j=1,nchan
+            jymodtot(j) = 0.d0
+            do l=1,2
+                ll = l+ns_best-1
+                do k=jwmin(j),jwmax(j)
+                    jymodtot(j) = jymodtot(j) + vec(l) * 
+     *                          c(j)*spec_stars(ll,k)*wgt(j,k)
+                enddo
+            enddo
+        enddo
+
+        return
+        end
+
+
+
+
