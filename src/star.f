@@ -60,12 +60,15 @@ c     Set the name of the file with the spectra.
 c   1 is Main Sequence
 c   2 is Giant Stars
 c   3 is Super Giant Stars
+c   4 is Brown Dwarfs
         if(num.eq.1) then
             write(specname,*)path(ip1:ip2), '/specs/lrt_kc04_MS.dat'
         else if(num.eq.2) then
             write(specname,*)path(ip1:ip2), '/specs/lrt_kc04_GS.dat'
         else if(num.eq.3) then
             write(specname,*)path(ip1:ip2), '/specs/lrt_kc04_SGS.dat'
+        else if(num.eq.4) then
+            write(specname,*)path(ip1:ip2), '/specs/lrt_a07_BDs.dat'
         else
             write(0,*)'Invalid value for inum: ',num
             write(0,*)'Exiting program.'

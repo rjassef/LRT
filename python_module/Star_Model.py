@@ -12,6 +12,7 @@ class StarModel(object):
             "MS":1,
             "GS":2,
             "SGS":3,
+            "BDs":4,
         } 
         lrt.starinit(bandmag_file,star_type[st],0)
         self.star_type = star_type

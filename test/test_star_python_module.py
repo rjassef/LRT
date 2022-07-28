@@ -3,6 +3,10 @@ from Star_Model import StarModel
 import numpy as np
 
 data = np.loadtxt("fake_stellar_catalog.dat",skiprows=1)
+data2 = np.loadtxt("fake_bds_catalog.dat",skiprows=1)
+print(data.shape, data2.shape)
+data = np.concatenate([data,data2])
+print(data.shape)
 
 for k in range(data.shape[0]):
 
@@ -12,7 +16,7 @@ for k in range(data.shape[0]):
 
     chimin = None
     stype_best = None
-    for stype in ["MS","GS","SGS"]:
+    for stype in ["MS","GS","SGS","BDs"]:
         star = StarModel(st=stype, bandmag_file="bandmag_stars.dat")
         star.jy = jy
         star.ejy = ejy
