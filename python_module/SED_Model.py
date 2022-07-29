@@ -439,7 +439,7 @@ class lrt_model(object):
         plt.plot(lamm,jym,'cs',markerfacecolor='None')
         plt.errorbar(lam,jy,xerr=None,yerr=ejy,fmt='ro')
         if len(lamu)>0:
-            plt.errorbar(lamu,0.9*ejyu,yerr=0.1*ejyu,lolims=True,fmt=None)
+            plt.errorbar(lamu,0.9*ejyu,yerr=0.1*ejyu,lolims=True,fmt='None')
         plt.plot(lrt.wavegrid.bcen[0:nw],smod,'k-')
         plt.xscale('log')
         plt.yscale('log')
@@ -456,7 +456,7 @@ class lrt_model(object):
         if len(lamu)>0:
         #    print lamu
         #    raw_input()
-            plt.errorbar(lamu,0.9*ejyu,yerr=0.1*ejyu,lolims=True,fmt=None)
+            plt.errorbar(lamu,0.9*ejyu,yerr=0.1*ejyu,lolims=True,fmt='None')
 
         #for j in range(len(ejyu)):
         #    plt.arrow(lamu[j], ejyu[j], 0., -0.5*ejyu[j],width=0.1*lamu[j])

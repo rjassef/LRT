@@ -82,7 +82,7 @@ class StarModel(object):
         plt.plot(lamm,jym,'cs',markerfacecolor='None')
         plt.errorbar(lam,jy,xerr=None,yerr=ejy,fmt='ro')
         if len(lamu)>0:
-            plt.errorbar(lamu,0.9*ejyu,yerr=0.1*ejyu,lolims=True,fmt=None)
+            plt.errorbar(lamu,0.9*ejyu,yerr=0.1*ejyu,fmt='None',lolims=True)
         plt.plot(lrt.wavegrid.bcen[0:nw],smod,'k-')
         plt.xscale('log')
         plt.yscale('log')
@@ -95,7 +95,7 @@ class StarModel(object):
         plt.plot(lamm,jym,'cs',markerfacecolor='None')
         plt.errorbar(lam,jy,xerr=None,yerr=ejy,fmt='ro')
         if len(lamu)>0:
-            plt.errorbar(lamu,0.9*ejyu,yerr=0.1*ejyu,lolims=True,fmt=None)
+            plt.errorbar(lamu,0.9*ejyu,yerr=0.1*ejyu,fmt='None',lolims=True)
 
         plt.xlabel(r'Rest-Frame $\lambda (\mu m)$')
         plt.ylabel(r'$\propto \nu F_{\nu}$')
@@ -118,8 +118,13 @@ class StarModel(object):
                      transform = ax.transAxes)
         if self.ns_best is not None:
             yloc -= dyloc
-            plt.text(xloc, yloc,'Templates: {0:.2f})'.format(self.tfit),
+            plt.text(xloc, yloc,'Templates: {0:.2f}'.format(self.tfit),
                      transform = ax.transAxes)
+
+        ymin, ymax = plt.ylim()
+        if ymin/ymax < 1e-5:
+            ymin = ymax*1e-5
+            plt.ylim([ymin,ymax])
 
         if figname is None:
             plt.show()
