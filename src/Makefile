@@ -4,7 +4,7 @@ FC = gfortran
 #FC = ifort
 
 #Compiler Flags
-FCFLAGS = -ffixed-line-length-none -std=legacy #-fbounds-check
+FCFLAGS = -ffixed-line-length-none -std=legacy -mcmodel=medium #-fbounds-check
 #FCFLAGS = -ffixed-line-length-none
 #FCFLAGS = -extend_source -O #-check
 
