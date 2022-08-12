@@ -80,7 +80,8 @@ def in_ipython():
 class lrt_model(object):
 
     #Initialize.
-    def __init__(self):
+    def __init__(self, fixed_igm_zp=True):
+        self.fixed_igm_zp = fixed_igm_zp
         #Data
         self.zspec = None
         self.jy    = None
@@ -309,8 +310,12 @@ class lrt_model(object):
 
         #Check pz has been initialized.
         if self._pzinit == False:
-            lrt.pzinit("bandmag.dat",1,1,0,self.zmin,self.zmax,self.dz,
-                       self.iverbose)
+            if self.fixed_igm_zp:
+                lrt.pzinit("bandmag.dat",1,1,0,self.zmin,self.zmax,self.dz,
+                        self.iverbose)
+            else:
+                lrt.pzinit("bandmag.dat",1,1,1,self.zmin,self.zmax,self.dz,
+                        self.iverbose)
             self.nchan = lrt.data1b.nchan
             self._pzinit = True
             self._kcinit = False
