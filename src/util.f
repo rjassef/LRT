@@ -6,11 +6,11 @@ c
       implicit real*8 (a-h,o-z)
 
       real*8 dcom(5000),dlum(5000),dmod(5000),dvol(5000),rstar(5000)
-      common /distance/dcom,dlum,dmod,dvol,rstar       
+      common /distance/dcom,dlum,dmod,dvol,rstar
 
-      real*8 zin2(5000)      
+      real*8 zin2(5000)
       common /distance2/zin2,dz,zinmin,zinmax,nin2
-      
+
       real*8 om,ol,ok,H0,DH
       common /cosmo/om,ol,ok,H0,DH
 
@@ -25,17 +25,17 @@ c     Complete the integration up to the redshift needed.
       npt = 1000
       zmin = zin2(i)
       zmax = z
-      delz = (zmax-zmin)/float(npt-1) 
+      delz = (zmax-zmin)/float(npt-1)
       dadd = 0.d0
       do k=1,npt
          ztemp = zmin + delz*float(k-1)
          x   = ztemp
          val = 1.d0/sqrt(om*(1.d0+x)**3+ok*(1.d0+x)**2+ol)
-         if (k.ne.1) dadd = dadd + 0.5d0*delz*(val+vold) 
+         if (k.ne.1) dadd = dadd + 0.5d0*delz*(val+vold)
          vold  = val
       enddo
       DC = dcom(i) + DH*dadd
-            
+
 c     Calculate DM and DL.
       if(ok.gt.0.d0) then
          DM = DH*sinh(sqrt(ok)*DC/DH)/sqrt(ok)
@@ -74,7 +74,7 @@ c     redshift. This function if for creating mock galaxies using the
 c     templates.
       subroutine get_mags(comp,euse,guse,z,jymodtot)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4)
 
       real*8 comp(*),jymodtot(*)
       real*8 euse,guse
@@ -87,7 +87,7 @@ c     templates.
       real*8 c(NCMAX)
       common /weights1/wgt,c
       integer jwmin(NCMAX),jwmax(NCMAX)
-      common /weights2/jwmin,jwmax 
+      common /weights2/jwmin,jwmax
 
       real*8 bedge(NWMAX)
       real*8 bcen(NWMAX)
@@ -114,7 +114,7 @@ c     templates.
 c     Transform the component vectors back to the natural units of the
 c     code. Note DL(z) is in Mpc.
       if(z.gt.0.d0) then
-         DL_use = DL(z)/(1.d0+z)
+         DL_use = DL(z) !/(1.d0+z) Corrected in 2021-01-28
       else if(z.eq.-1.d0) then
 c     Assume we are getting an absolute magnitude if z=-1. So DL=10pc=1e-5Mpc
          DL_use = 1.d-5
@@ -122,7 +122,7 @@ c     Assume we are getting an absolute magnitude if z=-1. So DL=10pc=1e-5Mpc
       else
          write(6,*)'Redshift must be positive.'
       endif
-      vecfac = DL_use**2*1d10*3d-9
+      vecfac = DL_use**2*1d10*3d-9/(1.d0+z) !Added back (1+z) in 2021-01-28
       do l = 1,nspec
          vec(l) = comp(l)*alpha_norm(l)/vecfac
       enddo
@@ -183,14 +183,14 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Symmetrize the matrix
       subroutine symmat(a,b,maxdim,nwave)
       real*8 b(maxdim),a(maxdim,maxdim)
-      
+
       do k1=1,nwave
-         do k2=1,k1-1 
+         do k2=1,k1-1
             a(k1,k2) = a(k2,k1)
          enddo
       enddo
 
-      return 
+      return
       end
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -199,7 +199,7 @@ c     Get chi2 of the fit using fluxes.
 c
       subroutine get_chi_jy(jy,ejy,jymod,jyuse,nchan,chi2)
       implicit real*8 (a-h,o-z)
-      
+
       real*8 jy(*),jymod(*),ejy(*)
       integer jyuse(*)
 
@@ -223,11 +223,11 @@ c     Get chi2 of the fit using mags.
 c
       subroutine get_chimag(mag,emag,magmod,maguse,nchan,chi2)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32)
+      parameter (NCMAX=40)
 
       real*8 mag(*),magmod(*),emag(*)
       integer maguse(*)
-      
+
       real*8 jy(NCMAX),ejy(NCMAX),jymod(NCMAX)
 
       real*8 jyzero(NCMAX),sat(NCMAX),con(NCMAX),lbar(NCMAX)
@@ -277,10 +277,10 @@ c     Get the AGN Luminosity density at a specific wavelength in um
 
       real*8 function get_AGN_Lnu(comp,z,xlam)
       implicit real*8(a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4,NTMAX=4)
 
       real*8 comp(*)
-      
+
       real*8 bedge(NWMAX)
       real*8 bcen(NWMAX)
       common /wavegrid/bedge,bcen,nwave
@@ -288,7 +288,7 @@ c     Get the AGN Luminosity density at a specific wavelength in um
       real*8 spec(NSMAX,NWMAX),specuse(NSMAX,NWMAX)
       common /specmod1/spec,specuse,nspec
       common /specnorm/bminnorm,bmaxnorm
-     
+
       real*8 vec(NSMAX)
 
       real*8 alpha_norm(NSMAX)
@@ -367,7 +367,7 @@ c     Comp to vec
       flux_tot = flux_tot*1.d-23
       get_Lnu = 4.d0*pi*(DL(z)*3.086d24)**2 * flux_tot/(1.d0+z)
 
-      return 
+      return
       end
 
 cccccccccccc
@@ -379,7 +379,7 @@ c     be a description of galaxies.
 c
       real*8 function ML_Bell03_II(comp,z)
       implicit real*8 (a-h,o-z)
-      parameter(NWMAX=350,NCMAX=32,NSMAX=4)
+      parameter(NWMAX=350,NCMAX=40,NSMAX=4)
       parameter(pi=3.14159d0)
 
       real*8 M
@@ -404,7 +404,7 @@ c     template.
       real*8 ML(NSMAX)
       data ML/0.d0,0.62351559837353399d0,
      *     0.59180425337814679d0,0.47329597624195591d0/
-      
+
 c     Ks-band zero point.
       jyzero_kband = 666.7d0
 

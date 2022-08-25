@@ -69,6 +69,7 @@ ifeq ($(PWD),$(LRTPATH))
 else
 	@ [ -d $(LRTPATH) ] || $(MKDIR) $(LRTPATH)
 	$(CP) $(PYSRCDIR)/SED_Model.py $(LRTPATH)
+	$(CP) $(PYSRCDIR)/Star_Model.py $(LRTPATH)
 	$(CP) $(PYSRCDIR)/__init__.py $(LRTPATH)
 	$(CP) $(PYSRCDIR)/lrt.*so  $(LRTPATH)
 

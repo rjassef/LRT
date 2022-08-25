@@ -4,8 +4,8 @@ c     square degrees.
 c
       real*8 function vmax(comp,ebv,igm,jchan,mlim,zlim,area)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4)
-      
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4)
+
       real*8 comp(NSMAX)
       real*8 mlim
       real*8 ebv,igm
@@ -33,7 +33,7 @@ c     algorithm doesn't converge, the function will return zlim=4.
 c
       subroutine findzlim(comp,ebvx,igmx,jchan,mlim,zlim,idbg)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4)
 
       real*8 mlim,magl
       real*8 ebvx,igmx
@@ -46,7 +46,7 @@ c
       real*8 c(NCMAX)
       common /weights1/wgt,c
       integer jwmin(NCMAX),jwmax(NCMAX)
-      common /weights2/jwmin,jwmax 
+      common /weights2/jwmin,jwmax
 
       real*8 bedge(NWMAX)
       real*8 bcen(NWMAX)
@@ -68,7 +68,7 @@ c
       real*8 emin,emax,de
       real*8 gmin,gmax,dg
       integer ne,ng
-      common /redpars/emin,emax,de,ne     
+      common /redpars/emin,emax,de,ne
       common /igmpars/gmin,gmax,dg,ng
 
 
@@ -107,13 +107,13 @@ c     Get the model flux.
             else
                dust = 10.d0**(-0.4d0*tau(k)*euse)
             endif
-            jymodlim(l) = jymodlim(l) + 
+            jymodlim(l) = jymodlim(l) +
      *           c(jchan)*spec(l,k)*wgt(jchan,k)*dust*tigm(k)
          enddo
       enddo
       jymodlimtot = 0.d0
       do l = 1,nspec
-         jymodlimtot = jymodlimtot + 
+         jymodlimtot = jymodlimtot +
      *        vec(l)*jymodlim(l)
       enddo
 
@@ -138,7 +138,7 @@ c     If it cannot converge, print this statement and exit the
 c     subroutine.
       icont = icont + 1
       if(icont.gt.100) then
-         write(0,*)'Could not converge in 100 iterations in function 
+         write(0,*)'Could not converge in 100 iterations in function
      *        findzlim. Exiting subroutine and setting zlim to -4.'
 c         write(0,*)zlim,zlimhig,zlimlow,magl,mlim
          pause
@@ -160,7 +160,7 @@ c     component.
 c
       real*8 function bol_lum(vec)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4)
 
       real*8 vec(*)
 
@@ -172,7 +172,7 @@ c
          bol_lum = bol_lum + vec(l)
       enddo
 
-      return 
+      return
       end
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -224,4 +224,3 @@ c
 
       return
       end
-

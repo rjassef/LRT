@@ -10,7 +10,7 @@ c     function to be called.
 c
       subroutine setfilt(filtname)
       implicit real*8(a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4,NTMAX=4)
 
       character filtname*(*)
       character*200 bname(NCMAX)
@@ -26,15 +26,15 @@ c
       common /data1b/jy,ejy,nchan
       integer verbose
       common /verb/verbose
-      
+
       if(verbose.eq.1) then
          print*
          print*,
      *    '*********************************************************'
          print*,'Reading Filters and Setting Normalizations...'
       endif
-      
-      
+
+
       jchan = 0
       open(unit=14,file=filtname,status='old')
 
@@ -49,12 +49,12 @@ c
       nchan = jchan
       call setconstants(nchan)
 
-      if(verbose.eq.1) then      
+      if(verbose.eq.1) then
          print*,
      *    '*********************************************************'
          print*
       endif
-      
+
       return
       end
 
@@ -62,10 +62,10 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 c     This function calculates all the necessary constants for the
 c     filters calibrations.
-c      
+c
       subroutine setconstants(nchan)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NGMAX=17000,NWMAX=350,NSMAX=4,NTMAX=4)
+      parameter (NCMAX=40,NGMAX=17000,NWMAX=350,NSMAX=4,NTMAX=4)
 
       character*200 bname(NCMAX)
       common /bands/bname
@@ -130,8 +130,8 @@ c
          do i=1,nfilt(jchan)
             read(13,*)lamf(jchan,i),eff(jchan,i)
             lamf(jchan,i) = lamf(jchan,i)/10000.0
-            if ((lamf(jchan,i).gt.100).or.(lamf(jchan,i).lt.0.01)) then 
-               write(0,*)'you probably have an angstron/micron conversion 
+            if ((lamf(jchan,i).gt.100).or.(lamf(jchan,i).lt.0.01)) then
+               write(0,*)'you probably have an angstron/micron conversion
      *              problem '
                write(0,*)'in setconstants for filter ',fname
                stop
@@ -139,7 +139,7 @@ c
          enddo
          close(unit=13)
 c
-c     Interpolate the vega spectrum onto this grid 
+c     Interpolate the vega spectrum onto this grid
 c
          if (inorm.eq.VEGA) then
             do kwave=1,nfilt(jchan)
@@ -148,7 +148,7 @@ c
      *                 (lvega(ll).gt.lamf(jchan,kwave))) then
                      slope          = (lamf(jchan,kwave)-lvega(ll-1))/
      *                    (lvega(ll)-lvega(ll-1))
-                     vinterp(kwave) = vegaraw(ll-1) + 
+                     vinterp(kwave) = vegaraw(ll-1) +
      *                    slope*(vegaraw(ll)-vegaraw(ll-1))
                   endif
                enddo
@@ -201,14 +201,14 @@ c
             a3 = a3 + 0.5*del*(vlow+vhig)
 
          enddo
-         con(jchan) = a2/a1/a3   
-         lbar(jchan) = a3/a2    
+         con(jchan) = a2/a1/a3
+         lbar(jchan) = a3/a2
       enddo
       if(verbose.eq.1) then
          print*,'Done'
       endif
 
-      return 
+      return
       end
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -224,8 +224,8 @@ c     setfilt.
 c
       subroutine settemp(num)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4)
-      
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4,NTMAX=4)
+
       integer num
 
       real*8 bedge(NWMAX)
@@ -324,13 +324,13 @@ c     grid.
             stop
          endif
       enddo
-      close(unit=13)  
+      close(unit=13)
 
 c     Normalize the templates to 10**10 L_sun at 10 pc. This is only
 c     important for determining bolometric luminosities. Note that
 c     during most of the running of the codes, this normalization is
 c     neglected and is only used when we want to get physical units for
-c     the contribution of each component to the SED.  
+c     the contribution of each component to the SED.
 c     Note that for the AGN template we only integrate longwards of
 c     Lyalpha.
       do l = 1,nspec
@@ -350,7 +350,7 @@ c     Initialize the ivaryobj files. The default is to use all templates.
          ivaryobj(l) = 1
       enddo
 
-c     Initialize the use of the reddening prior. 
+c     Initialize the use of the reddening prior.
       use_red_igm_prior = 1
 
       if(verbose.eq.1) then
@@ -371,27 +371,27 @@ c     lambda. See the paper for a clearer explanation.
 c
       function getweight(zuse,jchan,kwave)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4)
-      
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4,NTMAX=4)
+
       real*8 bedge(NWMAX)
       real*8 bcen(NWMAX)
       common /wavegrid/bedge,bcen,nwave
       real*8 fterp(20),wterp(20)
-      
+
       real*8 jyzero(NCMAX),con(NCMAX),lbar(NCMAX)
       common /cal1/jyzero,con,lbar
-      
+
       integer nfilt(NCMAX)
       real*8 lamf(NCMAX,10000),eff(NCMAX,10000)
       common /filt1/lamf,eff,nfilt
-      
+
       wemin = bedge(kwave  )*(1.0+zuse)
       wemax = bedge(kwave+1)*(1.0+zuse)
 
       nterp = 20
       jj    = 1
       dwe   = (wemax-wemin)/float(nterp-1)
-      do kk=1,nterp 
+      do kk=1,nterp
          wterp(kk) = wemin + dwe*float(kk-1)
          fterp(kk) = 0.d0
          wedge     = wterp(kk)
@@ -421,7 +421,7 @@ c
 
 c Now do the integral
       getweight = 0.d0
-      do kk=1,nterp-1 
+      do kk=1,nterp-1
          wlow      = wterp(kk)
          whig      = wterp(kk+1)
          vlow      = fterp(kk  )/wlow
@@ -443,18 +443,18 @@ c     important.
 c
       subroutine getrange(jchan)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NGMAX=17000,NWMAX=350,NSMAX=4,NTMAX=4)
-      
+      parameter (NCMAX=40,NGMAX=17000,NWMAX=350,NSMAX=4,NTMAX=4)
+
       real*8 wgt(NCMAX,NWMAX)
       real*8 c(NCMAX)
       common /weights1/wgt,c
       integer jwmin(NCMAX),jwmax(NCMAX)
       common /weights2/jwmin,jwmax
-      
+
       real*8 bedge(NWMAX)
       real*8 bcen(NWMAX)
       common /wavegrid/bedge,bcen,nwave
-      
+
       real*8 wint(NWMAX)
 
       integer jyuse(NCMAX)
@@ -490,14 +490,14 @@ c     Get the wavelength ranges.
          wint(kwave) = wint(kwave)/wnorm
       enddo
       do kwave=1,nwave
-         if (wint(kwave).lt.0.999) jwmax(jchan) = kwave 
+         if (wint(kwave).lt.0.999) jwmax(jchan) = kwave
       enddo
       do kwave=nwave,1,-1
-         if (wint(kwave).gt.0.001) jwmin(jchan) = kwave 
+         if (wint(kwave).gt.0.001) jwmin(jchan) = kwave
       enddo
 
 c     Now needs to extend the coverage 1 resolution element to really
-c     include 99.9% of the flux in the band.  
+c     include 99.9% of the flux in the band.
 c     If the filter has a limit at the end of the spectrum, eliminate
 c     the channel from the fit.
       if(jwmin(jchan).gt.1) then
@@ -519,7 +519,7 @@ c     *           'Channel is eliminated from the fit.'
      *           ,' is partially outside of the SEDs wavelength range.',
      *           'Channel is eliminated from the fit.'
          endif
-      endif         
+      endif
 
       return
       end
@@ -530,31 +530,31 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     This subroutine sets the luminosity distances for all redshifts in
 c     the table.
 c     The arguments are
-c     
+c
 c     zin = vector containing the redshifts of the table (real*8)
-c 
+c
 c     nin = number of redshifts in vector zin (integer)
 c
 c     This function does not need to be called by the user at any
-c     time. 
+c     time.
 c
       subroutine setdist(zin,nin)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4)
       implicit real*8 (a-h,o-z)
-      
+
       real*8 zin(*)
-      
+
       real*8 dcom(5000),dlum(5000),dmod(5000),dvol(5000),rstar(5000)
       common /distance/dcom,dlum,dmod,dvol,rstar
 
-      real*8 zin2(5000)      
+      real*8 zin2(5000)
       common /distance2/zin2,dz,zinmin,zinmax,nin2
-      
+
       real*8 om,ol,ok,H0,DH
       common /cosmo/om,ol,ok,H0,DH
 
       real*8 DM(10000)
-      
+
       real*8 aux(4)
       character*50 line
 
@@ -584,13 +584,13 @@ c     defaults.
       jj=1
       icheck=0
       open(unit=20,file='cosmo.dat',status='old',err=101)
- 100  read(20,*,end=102)line 
+ 100  read(20,*,end=102)line
         if(icheck.eq.0.and.verbose.eq.1) then
            print*,'Found file cosmo.dat'
            print*,'Setting up User Cosmology'
            print*
            icheck=1
-        endif           
+        endif
         if(line(1:1).eq.'#'.or.line.eq.' ') goto 100
         read(line,*)aux(jj)
         jj = jj+1
@@ -604,7 +604,7 @@ c     defaults.
       endif
       aux(1) =  0.3d0         !Omega_Matter
       aux(2) =  0.7d0         !Omega_Lambda
-      aux(3) =  0.0d0         !Omega_k   
+      aux(3) =  0.0d0         !Omega_k
       aux(4) = 70.0d0         !Hubble Parameter Today in km/s/Mpc
 
  102  continue
@@ -634,20 +634,20 @@ c     formalism of Hogg, D., 1999, astro-ph/9905116
       do i=1,nin-1
          zmin = zin(i)
          zmax = zin(i+1)
-         delz = (zmax-zmin)/float(npt-1) 
+         delz = (zmax-zmin)/float(npt-1)
          dadd = 0.d0
          do k=1,npt
             ztemp = zmin + delz*float(k-1)
             x   = 1+ztemp
             val = 1.d0/sqrt(om*x**3+ok*x**2+ol)
-            if (k.ne.1) dadd = dadd + 0.5d0*delz*(val+vold) 
+            if (k.ne.1) dadd = dadd + 0.5d0*delz*(val+vold)
             vold  = val
          enddo
-         dcom(i+1) = dcom(i) + DH*dadd 
+         dcom(i+1) = dcom(i) + DH*dadd
       enddo
 
 c     Determine the transverse comoving distance
-      if(ok.eq.0.d0) then 
+      if(ok.eq.0.d0) then
          do i=1,nin
             DM(i) = dcom(i)
          enddo
@@ -687,7 +687,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       subroutine closemag(jchan,nchan,jclose)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32)
+      parameter (NCMAX=40)
 
       real*8 jyzero(NCMAX),con(NCMAX),lbar(NCMAX)
       common /cal1/jyzero,con,lbar
@@ -708,16 +708,16 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
             endif
          endif
       enddo
-      
+
       return
-      end    
+      end
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 
       subroutine total_corr(z,jchan,nchan,jcorr,magtotuse)
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32)
+      parameter (NCMAX=40)
 
       real*8 jyzero(NCMAX),con(NCMAX),lbar(NCMAX)
       common /cal1/jyzero,con,lbar
@@ -750,10 +750,10 @@ c     the transmission bluewards of Lyman alpha
 c
       function transmit(alamrest,zqso,scale)
       implicit real*8 (a-h,o-z)
-      
+
 c     alamrest = rest wavelength
       alamobs = alamrest*(1.0+zqso)
-      
+
 c     wavelength of lyman alpha in microns
       wavelya = 0.121567d0
       wavelyb = 0.102518d0
@@ -761,7 +761,7 @@ c     wavelength of lyman alpha in microns
          transmit = 1.d0
          return
       endif
-      
+
 c     this model is from Fan et al. AJ 132 117 2006
 c     Lyman alpha absorbers
       onepzabs = alamobs/wavelya
@@ -771,7 +771,7 @@ c     Lyman beta absorbers
          onepzabs = alamobs/wavelyb
          tau      = tau + 0.38d0*(0.2d0*onepzabs)**4.3d0
       endif
-      
+
 c     Lyman limit absorbers -- uses number of lyman limit systems from
 c     Stengler-Larrea et al. ApJ 444 64 1995 assumes optical depth of
 c     tau0 for an absorber counts up mean number of absorbers to the
@@ -783,9 +783,9 @@ c     depth to shorter wavelengths wavelength of lyman limit in microns
          onepzabs = 1.d0 + zqso
          tau      = tau + 0.1d0*tau0*(onepzabs**2.5d0-1.d0)
       endif
-      
+
       transmit = exp(-scale*tau)
-      
+
       return
       end
 
@@ -824,9 +824,9 @@ c
             endif
          endif
       endif
-      
+
       rgal = a+b/rv
-      
+
 c     compute the SMC curve
       c1 = -5.68
       c2 =  2.53
@@ -834,7 +834,7 @@ c     compute the SMC curve
       x0 =  4.56
       g0 =  1.68
       c4 =  0.60
-      
+
       df = x*x/((x*x-x0*x0)**2+(x*g0)**2)
       if (x.gt.5.9) then
          ff = 0.5392*(x-5.9)**2+0.05644*(x-5.9)**3
@@ -843,17 +843,17 @@ c     compute the SMC curve
       endif
       asmc  = 1.0
       bsmc  = c1 + c2*x + c3*df + c4*ff
-      
+
       rsmc = asmc+bsmc/rv
-      
+
       if (x.lt.4.0) then
          rl = max(rgal,rsmc)
       else
          rl = rsmc
       endif
-      
+
       rl = rv*rl
-      
+
       return
       end
 
@@ -935,7 +935,7 @@ c
          gmin = 0.0d0
          gmax = 1.4d0
          ng   = 8
-         dg   = (gmax-gmin)/float(max(ng-1,1))         
+         dg   = (gmax-gmin)/float(max(ng-1,1))
       else
          gmin = 1.d0
          gmax = 1.d0
@@ -952,7 +952,7 @@ c     after setfilt and before settemp.
 c
       subroutine read_zpc
       implicit real*8 (a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4,NGMAX=17000)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4,NTMAX=4,NGMAX=17000)
 
       real*8 wgt(NCMAX,NWMAX)
       real*8 c(NCMAX)
@@ -1003,4 +1003,3 @@ c     Read the channel zero point corrections.
 
       return
       end
-

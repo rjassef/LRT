@@ -1,0 +1,12 @@
+##
+#Filter Name		       Norm       Zero Point
+##
+sdssu                       3           3631.
+sdssg                       3           3631.
+sdssr                       3           3631.
+sdssi                       3           3631.
+sdssz                       3           3631.
+real_wise_band_1            3           3631.
+real_wise_band_2            3           3631.
+real_wise_band_3            3           3631.
+real_wise_band_4            3           3631.

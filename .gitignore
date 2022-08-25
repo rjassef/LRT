@@ -2,5 +2,10 @@
 *~
 *.so
 *.a
+*.plist
+test/star_model
+.vscode/configurationCache.log
+.vscode/dryrun.log
+.vscode/targets.log
 lrt.cpython*dSYM
 .vscode

@@ -80,7 +80,8 @@ def in_ipython():
 class lrt_model(object):
 
     #Initialize.
-    def __init__(self):
+    def __init__(self, fixed_igm_zp=True):
+        self.fixed_igm_zp = fixed_igm_zp
         #Data
         self.zspec = None
         self.jy    = None
@@ -333,8 +334,12 @@ class lrt_model(object):
 
         #Check pz has been initialized.
         if self._pzinit == False:
-            lrt.pzinit("bandmag.dat",1,1,0,self.zmin,self.zmax,self.dz,
-                       self.iverbose)
+            if self.fixed_igm_zp:
+                lrt.pzinit("bandmag.dat",1,1,0,self.zmin,self.zmax,self.dz,
+                        self.iverbose)
+            else:
+                lrt.pzinit("bandmag.dat",1,1,1,self.zmin,self.zmax,self.dz,
+                        self.iverbose)
             self.nchan = lrt.data1b.nchan
             self._pzinit = True
             self._kcinit = False
@@ -388,7 +393,7 @@ class lrt_model(object):
 
     ###
 
-    def plot(self):
+    def plot(self, figname=None):
 
         '''
         Plots the model and the data.
@@ -463,7 +468,7 @@ class lrt_model(object):
         plt.plot(lamm,jym,'cs',markerfacecolor='None')
         plt.errorbar(lam,jy,xerr=None,yerr=ejy,fmt='ro')
         if len(lamu)>0:
-            plt.errorbar(lamu,0.9*ejyu,yerr=0.1*ejyu,lolims=True,fmt=None)
+            plt.errorbar(lamu,0.9*ejyu,yerr=0.1*ejyu,lolims=True,fmt='None')
         plt.plot(lrt.wavegrid.bcen[0:nw],smod,'k-')
         plt.xscale('log')
         plt.yscale('log')
@@ -480,7 +485,7 @@ class lrt_model(object):
         if len(lamu)>0:
         #    print lamu
         #    raw_input()
-            plt.errorbar(lamu,0.9*ejyu,yerr=0.1*ejyu,lolims=True,fmt=None)
+            plt.errorbar(lamu,0.9*ejyu,yerr=0.1*ejyu,lolims=True,fmt='None')
 
         #for j in range(len(ejyu)):
         #    plt.arrow(lamu[j], ejyu[j], 0., -0.5*ejyu[j],width=0.1*lamu[j])
@@ -517,13 +522,21 @@ class lrt_model(object):
             plt.text(xloc, yloc,r'$E(B-V)_{AGN}$'+" = %.2f" % (self.ebv),
                      transform = ax.transAxes)
 
-        if not in_ipython():
-            plt.show(block=True)
+        #if not in_ipython():
+        #    plt.show(block=True)
+        if figname is None:
+            plt.show()
+        else:        
+            plt.savefig(figname)
 
-        
+        return
+
     ###
 
     def plot_to_file(self,fig_name):
+
+        self.plot(figname=fig_name)
+        return
 
         '''
         Plots the model and the data.
