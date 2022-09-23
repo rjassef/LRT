@@ -324,7 +324,7 @@ c     Get the total Luminosity density at a specific wavelength in um
 
       real*8 function get_Lnu(comp,z,xlam)
       implicit real*8(a-h,o-z)
-      parameter (NCMAX=32,NWMAX=350,NSMAX=4,NTMAX=4)
+      parameter (NCMAX=40,NWMAX=350,NSMAX=4,NTMAX=4)
 
       real*8 comp(*)
       
