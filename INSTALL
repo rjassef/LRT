@@ -198,3 +198,6 @@ IV.- PYTHON MODULE
      and then compiled the module. In different Linux distributions
      upgrading ld might work differently.
 
+**NOTE 2**
+
+    The python module does not compile under Numpy 1.24.3 . May just be a bug in that version, as it compiles in 1.24.2 .
