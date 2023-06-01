@@ -4,7 +4,11 @@ FC = gfortran
 #FC = ifort
 
 #Compiler Flags
+ifeq ("$(shell uname -m)", "arm64")
+FCFLAGS = -ffixed-line-length-none -std=legacy #-fbounds-check
+else
 FCFLAGS = -ffixed-line-length-none -std=legacy -mcmodel=medium #-fbounds-check
+endif
 #FCFLAGS = -ffixed-line-length-none
 #FCFLAGS = -extend_source -O #-check
 
