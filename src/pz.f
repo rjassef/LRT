@@ -522,6 +522,9 @@ c     Start Main Cycle.
       do k=2,nfitz
          zval = zgal(k)
 
+         chi2gal_fixedz = 1.d32
+         chi2gal_noprior_fixedz = 1.d32
+
          do ie=1,ne
             if(ie.eq.1) then
                euse = 0.d0
@@ -645,12 +648,23 @@ c     Keep result if chi^2 is minimum or if its the first iteration.
      *                 ((ebv/0.5d0)**2 + ((igm-1.d0)/0.5d0)**2)
                endif
 
+               if (chival.lt.chi2gal_fixedz) then
+                  chi2gal_fixedz = chival
+                  if(uselump.eq.1.and.ineg.eq.0) then
+                     chi2gal_noprior_fixedz = chival - prior
+                  else
+                     chi2gal_noprior_fixedz = chival
+                  endif
+               endif
+
+
             enddo
          enddo
 
 c     If warranted, print the chi2 distribution.
          if(opchi2z.ne.0) then
-            write(90,100)zval,chival-prior,chival
+c            write(90,100)zval,chival-prior,chival
+            write(90,100)zval,chi2gal_noprior_fixedz, chi2gal_fixedz
  100        format(3E20.6)
          endif
 
