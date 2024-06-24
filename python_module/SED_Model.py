@@ -393,7 +393,7 @@ class lrt_model(object):
 
     ###
 
-    def plot(self, figname=None):
+    def plot(self, ylim=None, figname=None):
 
         '''
         Plots the model and the data.
@@ -489,6 +489,9 @@ class lrt_model(object):
 
         #for j in range(len(ejyu)):
         #    plt.arrow(lamu[j], ejyu[j], 0., -0.5*ejyu[j],width=0.1*lamu[j])
+
+        if ylim is not None:
+            plt.ylim(ylim)
 
         plt.xlabel(r'Rest-Frame $\lambda (\mu m)$')
         plt.ylabel(r'$\propto \nu F_{\nu}$')
