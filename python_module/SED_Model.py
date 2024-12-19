@@ -221,8 +221,8 @@ class lrt_model(object):
     @property
     def abs_mag(self):
 
-        if self._abs_mag is True:
-            return self._abs_mag
+        #if self._abs_mag is True:
+        #    return self._abs_mag
         
         '''
         From loaded model parameters, get the expected magnitudes.
