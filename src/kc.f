@@ -400,6 +400,12 @@ c     Determine the fit coefficients for individual galaxies.
       integer use_red_igm_prior
       common /red_igm_prior/use_red_igm_prior
 
+      real*8 mstar,alpha
+      integer uselump,lumchan
+      common /lumprior/mstar,alpha,uselump,lumchan
+
+      real*8 priorjy(NSMAX)
+      real*8 wgt0(NWMAX),jwmin0,jwmax0
 
       chimin = 1.d32
 
@@ -411,6 +417,23 @@ c     Set some needed reddening parameters.
       do j=1,ng
          chitabigm(j) = 1.d32
       enddo
+
+c     Set the galaxy prior if used. 
+      if (uselump.eq.1) then
+         do kwave=1,nwave
+            wgt0(kwave) = getweight(0.d0,lumchan,kwave)
+         enddo
+         dmod = 5.d0*dlog10(1.d6*DL(z)/10.d0)
+         fstar = jyzero(lumchan)*10.d0**(-0.4d0*(mstar+dmod))
+         do l=1,nspec
+            priorjy(l) = 0.d0
+            do kwave=1,nwmax
+               priorjy(l) = priorjy(l) + c(lumchan)*spec(l,kwave)*wgt0(kwave)
+            enddo
+         enddo
+      endif
+
+
 
 c     Start the main cycle.
       do ie = 1,ne+1
@@ -501,6 +524,10 @@ c     Compute the present model
                      enddo
                   enddo
                endif
+            enddo
+c     Add the bright part of the galaxy prior
+            do l=2,nspec
+               btemp(l) = btemp(l) - priorjy(l)/fstar
             enddo
             call symmat(atemp,btemp,maxdim,nspec)
 

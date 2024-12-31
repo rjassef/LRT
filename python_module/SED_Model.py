@@ -279,6 +279,7 @@ class lrt_model(object):
             self.nchan = lrt.data1b.nchan
             self._kcinit = True
             self._pzinit = False
+            lrt.setlumprior()
         
         #Check if the K-correction redshift is provided. Otherwise, set 0.
         if self.z0 == None:
