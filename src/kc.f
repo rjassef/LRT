@@ -529,9 +529,11 @@ c     Compute the present model
                endif
             enddo
 c     Add the bright part of the galaxy prior
-            do l=2,nspec
-               btemp(l) = btemp(l) - priorjy(l)/fstar
-            enddo
+            if (uselump.eq.1) then
+               do l=2,nspec
+                  btemp(l) = btemp(l) - priorjy(l)/fstar
+               enddo
+            endif
             call symmat(atemp,btemp,maxdim,nspec)
 
 
