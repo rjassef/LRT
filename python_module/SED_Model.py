@@ -253,7 +253,7 @@ class lrt_model(object):
 
     ###
 
-    def kc_fit(self):
+    def kc_fit(self, force_no_prior=False):
         '''Calls kca to do a full SED fit using the kca function.
            If no redshift is provided, then uses the photo-z. 
         '''
@@ -280,6 +280,8 @@ class lrt_model(object):
             self._kcinit = True
             self._pzinit = False
             lrt.setlumprior()
+            if force_no_prior:
+                lrt.lumprior.uselump = 0
         
         #Check if the K-correction redshift is provided. Otherwise, set 0.
         if self.z0 == None:
