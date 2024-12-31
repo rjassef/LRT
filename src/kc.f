@@ -407,6 +407,9 @@ c     Determine the fit coefficients for individual galaxies.
       real*8 priorjy(NSMAX)
       real*8 wgt0(NWMAX),jwmin0,jwmax0
 
+      real*8 jyzero(NCMAX),con(NCMAX),lbar(NCMAX)
+      common /cal1/jyzero,con,lbar
+
       chimin = 1.d32
 
 c     Set some needed reddening parameters.
