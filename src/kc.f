@@ -430,7 +430,7 @@ c     Set the galaxy prior if used.
          fstar = jyzero(lumchan)*10.d0**(-0.4d0*(mstar+dmod))
          do l=1,nspec
             priorjy(l) = 0.d0
-            do kwave=1,nwmax
+            do kwave=1,nwave
                priorjy(l) = priorjy(l) + c(lumchan)*spec(l,kwave)*wgt0(kwave)
             enddo
          enddo
