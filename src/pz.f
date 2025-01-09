@@ -578,8 +578,11 @@ c     are used.
 c     Solve assuming only positive coefficients. If convergence fails,
 c     revert to the slower version going through all possible
 c     combinations.
-c               call my_nnls_2(a,maxdim,nfitt,nfitt,b,temps,MODE,its,0)
-               MODE=3
+               if(uselump.ne.1) then
+                  call my_nnls_2(a,maxdim,nfitt,nfitt,b,temps,MODE,its,0)
+               else
+                  MODE=3
+               endif
                if(MODE.eq.3) then
                   do l1=1,nfitt
                      b(l1) = bsave(l1)
