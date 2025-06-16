@@ -400,9 +400,9 @@ c     Determine the fit coefficients for individual galaxies.
       integer use_red_igm_prior
       common /red_igm_prior/use_red_igm_prior
 
-      real*8 mstar,alpha
-      integer uselump,lumchan
-      common /lumprior/mstar,alpha,uselump,lumchan
+      real*8 mstar,alpha,mfaint
+      integer uselump,lumchan,lump_type_agn
+      common /lumprior/mstar,alpha,mfaint,uselump,lumchan,lump_type_agn
 
       real*8 priorjy(NSMAX)
       real*8 wgt0(NWMAX),jwmin0,jwmax0

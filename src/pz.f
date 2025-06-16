@@ -60,11 +60,11 @@ c
       implicit real*8 (a-h,o-z)
       parameter (NCMAX=40,NWMAX=350,NSMAX=4,NTMAX=4)
 
-      real*8 mstar,alpha
-      integer uselump,lumchan
-      common /lumprior/mstar,alpha,uselump,lumchan
+      real*8 mstar,alpha,mfaint
+      integer uselump,lumchan,lump_type_agn
+      common /lumprior/mstar,alpha,mfaint,uselump,lumchan,lump_type_agn
 
-      real*8 prior(5)
+      real*8 prior(7)
       character*100 line
 
       integer verbose
@@ -107,6 +107,8 @@ c     Jump here if the prior.dat file doesn't exist.
       prior(2) = 2d0
       prior(3) = -21.4d0
       prior(4) = -0.7d0
+      prior(5) = -16.d0
+      prior(6) = 0d0
 
  202  continue
       close(16)
@@ -115,6 +117,8 @@ c     Jump here if the prior.dat file doesn't exist.
       lumchan = int(prior(2))
       mstar   = prior(3)
       alpha   = prior(4)
+      mfaint  = prior(5)
+      lump_type_agn = int(prior(6))
 
 c     Print settings.
       if(uselump.eq.1) then
@@ -345,9 +349,9 @@ c
       real*8 jyzero(NCMAX),con(NCMAX),lbar(NCMAX)
       common /cal1/jyzero,con,lbar
 
-      real*8 mstar,alpha
-      integer uselump,lumchan
-      common /lumprior/mstar,alpha,uselump,lumchan
+      real*8 mstar,alpha,mfaint
+      integer uselump,lumchan,lump_type_agn
+      common /lumprior/mstar,alpha,mfaint,uselump,lumchan,lump_type_agn
 
       integer opchi2z
       common /chiz/opchi2z
@@ -472,9 +476,9 @@ c
 
       real*8 vfit(NSMAX)
 
-      real*8 mstar,alpha
-      integer uselump,lumchan
-      common /lumprior/mstar,alpha,uselump,lumchan
+      real*8 mstar,alpha,mfaint
+      integer uselump,lumchan,lump_type_agn
+      common /lumprior/mstar,alpha,mfaint,uselump,lumchan,lump_type_agn
 
       real*8 vec(NSMAX)
       common /galtype/vec
@@ -497,13 +501,22 @@ c
       integer opchi2z
       common /chiz/opchi2z
 
+      logical exist
+
 
 c     Initialize values for return in case of failure.
       chigal    = 1.0d32
       chigalcut = 1.0d32
       zbest     = -1.d0
 
-      if(opchi2z.ne.0) write(90,*)opchi2z,ngalz-1
+      if(opchi2z.ne.0) then 
+         inquire(file="fort.90", exist=exist)
+         if (exist) then
+            open(unit=90, file="fort.90", status='old', position='append',
+     *          action='write')
+         endif
+         write(90,*)opchi2z,ngalz-1
+      endif
 
 c     Figure out the number of bands to use and exit if none can be used.
       nmag = 0
@@ -603,8 +616,11 @@ c               print*,temps,nfitt
 c     Compute the goodness of fit
                do jchan=1,nchan
                   estjy = 0.d0
+                  estjy_gal = 0.d0
                   do l=1,nfitt
                      estjy = estjy + temps(l)*galjy(k,l,jchan,ie,ig)
+                     if(l.gt.1) estjy_gal = estjy_gal + 
+     *                      temps(l)*galjy(k,l,jchan,ie,ig)
                   enddo
                   if (jyuse(jchan).ge.1) then
                      chival = chival + (jy(jchan)-estjy)**2/ejy(jchan)
@@ -614,24 +630,61 @@ c     Compute the goodness of fit
 c     Apply luminosity priors if any.
                prior = 0.d0
                if(uselump.eq.1) then
-                  estjy = 0.d0
-                  jchan = lumchan
-                  do l=2,nfitt
-                     estjy = estjy + temps(l)*priorjy(1,l,jchan)
+c     Estimate the fraction of the light coming from the host galaxy component. 
+                  gal_flux_frac_max = 0.d0
+                  do jchan = 1,nchan
+                     estjy = 0.d0
+                     estjy_gal = 0.d0
+                     do l=1,nfitt
+                        estjy = estjy + temps(l)*galjy(k,l,jchan,ie,ig)
+                        if(l.gt.1) estjy_gal = estjy_gal + 
+     *                      temps(l)*galjy(k,l,jchan,ie,ig)
+                     enddo
+                     if(estjy_gal/estjy.gt.gal_flux_frac_max) then
+                        gal_flux_frac_max = estjy_gal/estjy
+                     endif
                   enddo
-                  restr  = estjy
-                  ineg = 0
-                  if (estjy.le.0.d0) then
-                     ineg = 1
+c     If the fraction is smaller than 1%, then assume a minimum magnitude of mfaint
+                  if(gal_flux_frac_max.lt.0.01d0) then
+                     rabs = mfaint
                   else
+                     estjy = 0.d0
+                     jchan = lumchan
+                     do l=2,nfitt
+                        estjy = estjy + temps(l)*priorjy(1,l,jchan)
+                     enddo
                      rmag   = -2.5d0*dlog10(estjy/jyzero(jchan))
                      rabs   =  rmag-dmod(k)
-                     xi     = -0.4d0*(rabs-mstar)
-                     prior  = -2.0d0*(log(dvol(k))-10.d0**xi+(1.d0+alpha)*
-     *                    xi*dlog(10.d0))
                   endif
-                  chival    = chival+prior
-               endif
+                  xi     = -0.4d0*(rabs-mstar)
+                  prior  = -2.d0 * ((1.d0+alpha)*xi*dlog(10.d0)-10.d0**xi)
+                  if(lump_type_agn.ne.1) then 
+                     prior = prior - 2.d0 * log(dvol(k))
+                  endif
+c                  prior  = -2.0d0*(log(dvol(k))-10.d0**xi+(1.d0+alpha)*
+c     *                    xi*dlog(10.d0))  
+                  chival = chival + prior
+               endif                 
+   !             prior = 0.d0
+   !             if(uselump.eq.1) then
+   !                estjy = 0.d0
+   !                jchan = lumchan
+   !                do l=2,nfitt
+   !                   estjy = estjy + temps(l)*priorjy(1,l,jchan)
+   !                enddo
+   !                restr  = estjy
+   !                ineg = 0
+   !                if (estjy.le.0.d0) then
+   !                   ineg = 1
+   !                else
+   !                   rmag   = -2.5d0*dlog10(estjy/jyzero(jchan))
+   !                   rabs   =  rmag-dmod(k)
+   !                   xi     = -0.4d0*(rabs-mstar)
+   !                   prior  = -2.0d0*(log(dvol(k))-10.d0**xi+(1.d0+alpha)*
+   !   *                    xi*dlog(10.d0))
+   !                endif
+   !                chival    = chival+prior
+   !             endif
 
 c     Keep result if chi^2 is minimum or if its the first iteration.
                if ((chival.lt.chigal).or.(istart.eq.1)) then
@@ -673,6 +726,8 @@ c            write(90,100)zval,chival-prior,chival
          endif
 
       enddo
+
+      close(90)
 
       return
       end
