@@ -53,7 +53,7 @@ print("Should be 0.44")
 print 
 
 #Get the SED model
-gal.kc_fit(force_no_prior=True)
+gal.kc_fit()#force_no_prior=True)
 
 #Get the stellar mass.
 print("Mstar/M_sun = {0:.3e}".format(gal.Mstar))
